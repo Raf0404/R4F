@@ -10,8 +10,8 @@
   - Schermate di benvenuto, licenza e conclusione in italiano.
   - Bundle non spostabili dall'Installer (`<relocate/>` vuoto), richiede macOS 13 o successivo.
   - Non firmato con un certificato Developer ID: la guida spiega come aprirlo ("Apri comunque").
-  - Verificato il contenuto del pacchetto espanso. L'installazione vera con il pacchetto non è ancora
-    stata eseguita.
+  - Verificato il contenuto del pacchetto espanso, e verificata dall'utente l'installazione vera con il
+    pacchetto scaricato dalla Release v1.1.1.
 - File `VERSION` unico, usato da app e installer.
 - **README riscritto come pagina iniziale**: download, installazione, primo avvio, collegamento delle DAW,
   configurazione di R4F BUS, matrice, testo e preset, R4F BOX, device per Live, problemi comuni,
