@@ -1,0 +1,18 @@
+{
+  "bus": "BlackHole 64ch",
+  "bufferFrames": 128,
+  "outputs": [
+    { "id": "a", "device": "NOME DELLA PRIMA SCHEDA" },
+    { "id": "b", "device": "NOME DELLA SECONDA SCHEDA", "delayMs": 0 }
+  ],
+  "routes": [
+    { "from": "1-8", "to": "a:1-8" },
+    { "from": "9-16", "to": "b:1-8" },
+    { "from": 17, "to": "a:9-12", "gainDb": -3 },
+    { "from": "18-20", "to": "b:9" }
+  ],
+  "alignOutputs": true,
+  "feedForward": true,
+  "safetyFrames": 128,
+  "oscPort": 7400
+}

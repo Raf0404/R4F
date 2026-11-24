@@ -1,0 +1,13 @@
+{
+  "bus": "LiveBus 256ch",
+  "bufferFrames": 128,
+  "outputs": [
+    { "id": "a", "device": "NOME DELLA PRIMA SCHEDA" },
+    { "id": "b", "device": "NOME DELLA SECONDA SCHEDA" }
+  ],
+  "routes": [
+    { "from": "1-64", "to": "a:1-64" },
+    { "from": "65-128", "to": "b:1-64" }
+  ],
+  "oscPort": 7400
+}

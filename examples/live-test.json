@@ -1,0 +1,12 @@
+{
+  "bus": "LiveBus 256ch",
+  "bufferFrames": 256,
+  "outputs": [
+    { "id": "mac", "device": "Altoparlanti MacBook Pro" },
+    { "id": "bh", "device": "BlackHole 64ch" }
+  ],
+  "routes": [
+    { "from": "1-2", "to": "mac:1-2" }
+  ],
+  "oscPort": 7400
+}

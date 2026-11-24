@@ -1,0 +1,12 @@
+# compilazione
+.build/
+.swiftpm/
+*.xcodeproj
+build/
+driver/build/
+device/build/
+
+# sorgente di terze parti: lo scarica Scripts/fetch_blackhole.sh
+vendor/
+
+.DS_Store
