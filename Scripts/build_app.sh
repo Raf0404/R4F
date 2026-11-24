@@ -5,7 +5,7 @@
 #   Scripts/build_app.sh --no-install
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-VERSION="1.1.0"
+VERSION="$(cat "$ROOT/VERSION")"
 cd "$ROOT"
 swift build -c release 2>&1 | grep -E "error|Build complete" || true
 BIN="$ROOT/.build/release/livebus"

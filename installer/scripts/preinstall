@@ -1,0 +1,6 @@
+#!/bin/bash
+# Prima della copia: chiude R4F (o la vecchia LiveBus) se è aperta, così l'app si può sostituire.
+pkill -f "R4F.app/Contents/MacOS/R4F" 2>/dev/null
+pkill -f "LiveBus.app/Contents/MacOS/livebus" 2>/dev/null
+sleep 1
+exit 0

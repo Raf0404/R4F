@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.1.1 — installer e guida (2026-11-24)
+
+- **Installer `R4F-1.1.1.pkg`** (`Scripts/build_installer.sh`): installa i driver R4F BUS e R4F BOX, l'app
+  e il device per Live, poi apre R4F.
+  - `preinstall` chiude R4F o LiveBus se aperte.
+  - `postinstall` toglie le vecchie versioni LiveBus, riavvia CoreAudio, copia il device nella User Library
+    dell'utente (solo se esiste) e apre l'app come utente.
+  - Schermate di benvenuto, licenza e conclusione in italiano.
+  - Bundle non spostabili dall'Installer (`<relocate/>` vuoto), richiede macOS 13 o successivo.
+  - Non firmato con un certificato Developer ID: la guida spiega come aprirlo ("Apri comunque").
+  - Verificato il contenuto del pacchetto espanso. L'installazione vera con il pacchetto non è ancora
+    stata eseguita.
+- File `VERSION` unico, usato da app e installer.
+- **README riscritto come pagina iniziale**: download, installazione, primo avvio, collegamento delle DAW,
+  configurazione di R4F BUS, matrice, testo e preset, R4F BOX, device per Live, problemi comuni,
+  disinstallazione e sezione per sviluppatori.
+- Schemi illustrativi `docs/schema-bus.svg` e `docs/schema-box.svg`: frecce disegnate come forme e
+  non come marker SVG, così si vedono in qualsiasi visualizzatore.
+
 ## 1.1.1 — 2026-11-24
 
 Preparazione alla pubblicazione su GitHub.

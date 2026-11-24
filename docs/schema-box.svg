@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 330" width="960" height="330" font-family="-apple-system, 'Helvetica Neue', Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#21c4e6"/>
+    </marker>
+  </defs>
+  <rect width="960" height="330" rx="18" fill="#2a2928"/>
+  <text x="32" y="44" fill="#ffffff" font-size="22" font-weight="700">R4F BOX</text>
+  <text x="134" y="44" fill="#9aa0a6" font-size="16">da un programma all'altro, con la matrice dentro il driver</text>
+
+  <!-- programma A -->
+  <rect x="32" y="96" width="190" height="180" rx="12" fill="#3a3937" stroke="#55534f"/>
+  <text x="127" y="128" fill="#fff" font-size="16" font-weight="600" text-anchor="middle">Programma A</text>
+  <text x="127" y="148" fill="#9aa0a6" font-size="12" text-anchor="middle">es. DAW, sintetizzatore</text>
+  <text x="127" y="196" fill="#fff" font-size="13" text-anchor="middle">uscita audio:</text>
+  <text x="127" y="216" fill="#21c4e6" font-size="14" font-weight="700" text-anchor="middle">R4F BOX</text>
+
+  <path d="M226 186 L280 186" stroke="#21c4e6" stroke-width="3"/><path d="M270.0,179.0 L282.0,186.0 L270.0,193.0 z" fill="#21c4e6"/>
+
+  <!-- BOX -->
+  <rect x="286" y="76" width="388" height="220" rx="14" fill="#21c4e6"/>
+  <text x="480" y="104" fill="#10212a" font-size="17" font-weight="800" text-anchor="middle">R4F BOX · 256 canali</text>
+  <text x="330" y="130" fill="#10212a" font-size="12" text-anchor="middle">uscite</text>
+  <text x="630" y="130" fill="#10212a" font-size="12" text-anchor="middle">ingressi</text>
+  <g fill="#10212a" font-size="12">
+    <text x="318" y="158">1</text><text x="318" y="182">2</text><text x="318" y="206">3</text><text x="318" y="230">4</text><text x="314" y="246">…</text>
+    <text x="634" y="158">1</text><text x="634" y="182">2</text><text x="634" y="206">3</text><text x="634" y="230">4</text><text x="634" y="246">…</text>
+  </g>
+  <rect x="352" y="140" width="256" height="106" rx="10" fill="#2a2928"/>
+  <text x="480" y="164" fill="#fff" font-size="13" font-weight="600" text-anchor="middle">matrice</text>
+  <g stroke="#21c4e6" stroke-width="2.5" fill="none">
+    <path d="M362 154 C430 154 530 226 598 226"/>
+    <path d="M362 178 C430 178 530 226 598 226" opacity="0.6"/>
+    <path d="M362 202 C430 202 530 154 598 154"/>
+    <path d="M362 202 C430 202 530 178 598 178"/>
+  </g>
+  <text x="480" y="268" fill="#10212a" font-size="12" font-weight="600" text-anchor="middle">sposta · somma · copia · silenzia</text>
+  <text x="480" y="286" fill="#10212a" font-size="12" text-anchor="middle">nessuna latenza in più · attiva anche ad app chiusa</text>
+
+  <path d="M678 186 L732 186" stroke="#21c4e6" stroke-width="3"/><path d="M722.0,179.0 L734.0,186.0 L722.0,193.0 z" fill="#21c4e6"/>
+
+  <!-- programma B -->
+  <rect x="738" y="96" width="190" height="180" rx="12" fill="#3a3937" stroke="#55534f"/>
+  <text x="833" y="128" fill="#fff" font-size="16" font-weight="600" text-anchor="middle">Programma B</text>
+  <text x="833" y="148" fill="#9aa0a6" font-size="12" text-anchor="middle">es. registratore, streaming</text>
+  <text x="833" y="196" fill="#fff" font-size="13" text-anchor="middle">ingresso audio:</text>
+  <text x="833" y="216" fill="#21c4e6" font-size="14" font-weight="700" text-anchor="middle">R4F BOX</text>
+</svg>

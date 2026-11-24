@@ -1,0 +1,40 @@
+#!/bin/bash
+# Eseguito dal programma Installazione (come root) dopo aver copiato i file:
+# - toglie le versioni precedenti (LiveBus);
+# - riavvia CoreAudio, così R4F BUS e R4F BOX compaiono subito;
+# - copia il device Max for Live nella libreria dell'utente, se Ableton Live / Max sono presenti;
+# - apre R4F per l'utente collegato.
+set -u
+HAL="/Library/Audio/Plug-Ins/HAL"
+SHARE="/Library/Application Support/R4F"
+
+rm -rf "$HAL"/LiveBus*.driver /Applications/LiveBus.app
+chown -R root:wheel "$HAL/R4FBUS.driver" "$HAL/R4FBOX.driver" 2>/dev/null
+chmod -R go-w "$HAL/R4FBUS.driver" "$HAL/R4FBOX.driver" 2>/dev/null
+
+launchctl kickstart -k system/com.apple.audio.coreaudiod 2>/dev/null || killall -9 coreaudiod 2>/dev/null
+sleep 2
+
+USER_NAME="$(stat -f%Su /dev/console)"
+if [[ -n "$USER_NAME" && "$USER_NAME" != "root" ]]; then
+    HOME_DIR="$(dscl . -read "/Users/$USER_NAME" NFSHomeDirectory 2>/dev/null | awk '{print $2}')"
+    USER_ID="$(id -u "$USER_NAME")"
+
+    # device R4F Out per Ableton Live (solo se la User Library esiste)
+    LIB="$HOME_DIR/Music/Ableton/User Library"
+    if [[ -d "$LIB" && -f "$SHARE/MaxForLive/R4F Out.amxd" ]]; then
+        DEV="$LIB/Presets/Audio Effects/Max Audio Effect/R4F"
+        mkdir -p "$DEV" && cp "$SHARE/MaxForLive/R4F Out.amxd" "$DEV/"
+        chown -R "$USER_NAME" "$LIB/Presets/Audio Effects/Max Audio Effect/R4F"
+    fi
+    # lo script del device nel percorso di ricerca di Max (una sola copia)
+    if [[ -d "$HOME_DIR/Documents" && -f "$SHARE/MaxForLive/livebus_out.js" ]]; then
+        JS="$HOME_DIR/Documents/Max 9/Library/LiveBus"
+        mkdir -p "$JS" && cp "$SHARE/MaxForLive/livebus_out.js" "$JS/"
+        chown -R "$USER_NAME" "$HOME_DIR/Documents/Max 9"
+    fi
+
+    # apre R4F come utente (non come root)
+    launchctl asuser "$USER_ID" sudo -u "$USER_NAME" open -a /Applications/R4F.app 2>/dev/null || true
+fi
+exit 0

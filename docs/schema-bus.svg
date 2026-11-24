@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" width="960" height="400" font-family="-apple-system, 'Helvetica Neue', Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#21c4e6"/>
+    </marker>
+  </defs>
+  <rect width="960" height="400" rx="18" fill="#2a2928"/>
+  <text x="32" y="44" fill="#ffffff" font-size="22" font-weight="700">R4F BUS</text>
+  <text x="132" y="44" fill="#9aa0a6" font-size="16">dalla DAW a una o più schede audio</text>
+
+  <!-- DAW -->
+  <rect x="32" y="76" width="210" height="290" rx="12" fill="#3a3937" stroke="#55534f"/>
+  <text x="137" y="104" fill="#fff" font-size="16" font-weight="600" text-anchor="middle">DAW</text>
+  <text x="137" y="124" fill="#9aa0a6" font-size="12" text-anchor="middle">Live · Logic · Reaper · …</text>
+  <g font-size="13" fill="#fff">
+    <rect x="50" y="142" width="174" height="36" rx="7" fill="#4a4946"/><text x="62" y="165">Main</text><text x="212" y="165" text-anchor="end" fill="#21c4e6">1-2</text>
+    <rect x="50" y="188" width="174" height="36" rx="7" fill="#4a4946"/><text x="62" y="211">Voce</text><text x="212" y="211" text-anchor="end" fill="#21c4e6">3-4</text>
+    <rect x="50" y="234" width="174" height="36" rx="7" fill="#4a4946"/><text x="62" y="257">Batteria 5.1</text><text x="212" y="257" text-anchor="end" fill="#21c4e6">5-10</text>
+    <rect x="50" y="280" width="174" height="36" rx="7" fill="#4a4946"/><text x="62" y="303">Riverbero</text><text x="212" y="303" text-anchor="end" fill="#21c4e6">11</text>
+  </g>
+  <text x="137" y="346" fill="#9aa0a6" font-size="11" text-anchor="middle">uscita: R4F BUS, canale per traccia</text>
+
+  <path d="M246 221 L300 221" stroke="#21c4e6" stroke-width="3"/><path d="M290.0,214.0 L302.0,221.0 L290.0,228.0 z" fill="#21c4e6"/>
+
+  <!-- R4F BUS device -->
+  <rect x="306" y="150" width="130" height="142" rx="12" fill="#21c4e6"/>
+  <text x="371" y="206" fill="#10212a" font-size="17" font-weight="800" text-anchor="middle">R4F BUS</text>
+  <text x="371" y="228" fill="#10212a" font-size="13" text-anchor="middle">256 canali</text>
+  <text x="371" y="248" fill="#10212a" font-size="11" text-anchor="middle">scheda virtuale</text>
+
+  <path d="M440 221 L494 221" stroke="#21c4e6" stroke-width="3"/><path d="M484.0,214.0 L496.0,221.0 L484.0,228.0 z" fill="#21c4e6"/>
+
+  <!-- app -->
+  <rect x="500" y="104" width="196" height="236" rx="12" fill="#3a3937" stroke="#21c4e6" stroke-width="1.5"/>
+  <text x="598" y="134" fill="#fff" font-size="16" font-weight="700" text-anchor="middle">app R4F</text>
+  <g fill="#21c4e6">
+    <rect x="532" y="150" width="14" height="14" rx="3"/><rect x="568" y="168" width="14" height="14" rx="3"/>
+    <rect x="550" y="186" width="14" height="14" rx="3" opacity="0.5"/><rect x="586" y="186" width="14" height="14" rx="3" opacity="0.5"/>
+    <rect x="604" y="204" width="14" height="14" rx="3"/><rect x="622" y="204" width="14" height="14" rx="3"/><rect x="640" y="204" width="14" height="14" rx="3"/>
+  </g>
+  <g stroke="#55534f" fill="none">
+    <rect x="528" y="146" width="132" height="76" rx="4"/>
+  </g>
+  <text x="598" y="246" fill="#fff" font-size="13" text-anchor="middle">matrice di rotte</text>
+  <text x="598" y="266" fill="#9aa0a6" font-size="12" text-anchor="middle">somma · 1:1 · preset</text>
+  <text x="598" y="292" fill="#9aa0a6" font-size="12" text-anchor="middle">correzione della deriva</text>
+  <text x="598" y="310" fill="#9aa0a6" font-size="12" text-anchor="middle">del clock per ogni scheda</text>
+
+  <!-- outputs -->
+  <path d="M700 170 C740 170 740 136 790 136" stroke="#21c4e6" stroke-width="3" fill="none"/><path d="M780.0,129.0 L792.0,136.0 L780.0,143.0 z" fill="#21c4e6"/>
+  <path d="M700 221 L790 221" stroke="#21c4e6" stroke-width="3"/><path d="M780.0,214.0 L792.0,221.0 L780.0,228.0 z" fill="#21c4e6"/>
+  <path d="M700 272 C740 272 740 306 790 306" stroke="#21c4e6" stroke-width="3" fill="none"/><path d="M780.0,299.0 L792.0,306.0 L780.0,313.0 z" fill="#21c4e6"/>
+  <g font-size="13" fill="#fff">
+    <rect x="796" y="108" width="136" height="56" rx="10" fill="#4a4946"/>
+    <text x="864" y="132" text-anchor="middle" font-weight="600">Scheda A</text><text x="864" y="151" text-anchor="middle" fill="#9aa0a6" font-size="11">altoparlanti 1-8</text>
+    <rect x="796" y="193" width="136" height="56" rx="10" fill="#4a4946"/>
+    <text x="864" y="217" text-anchor="middle" font-weight="600">Scheda B</text><text x="864" y="236" text-anchor="middle" fill="#9aa0a6" font-size="11">sub · cuffie</text>
+    <rect x="796" y="278" width="136" height="56" rx="10" fill="#4a4946"/>
+    <text x="864" y="302" text-anchor="middle" font-weight="600">Mac</text><text x="864" y="321" text-anchor="middle" fill="#9aa0a6" font-size="11">ascolto (Main)</text>
+  </g>
+</svg>
