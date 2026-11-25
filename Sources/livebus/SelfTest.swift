@@ -10,7 +10,7 @@ func runSelfTest(seconds: Double) -> Bool {
     for ff in [true, false] {
         ok = simulate(feedForward: ff, seconds: seconds) && ok
     }
-    print(ok ? "\nSELFTEST OK" : "\nSELFTEST FALLITO")
+    print(ok ? "\nSELFTEST OK" : "\nSELFTEST FAILED")
     return ok
 }
 
@@ -73,10 +73,10 @@ private func simulate(feedForward ff: Bool, seconds: Double) -> Bool {
     let freqs = [1000.0, 15000.0, 300.0, 5000.0]
     let amps: [Float] = [0.5, 0.5, 0.25, 0.25]
 
-    print("\n— simulazione \(Int(seconds)) s, feed-forward \(ff ? "attivo" : "spento") —")
+    print("\n— simulation \(Int(seconds)) s, feed-forward \(ff ? "on" : "off") —")
     let chans = outs.map { UInt32($0.nch) }
     guard let eng = lb_engine_create(UInt32(busCh), fs, hostFreq, UInt32(outs.count), chans, 4096, 16384) else {
-        print("FALLITO: creazione motore"); return false
+        print("FAILED: engine creation"); return false
     }
     defer { lb_engine_destroy(eng) }
     for (i, o) in outs.enumerated() {
@@ -148,7 +148,7 @@ private func simulate(feedForward ff: Bool, seconds: Double) -> Bool {
 
     var ok = true
     func verdict(_ cond: Bool, _ msg: String) {
-        print((cond ? "  ok    " : "  FALLITO ") + msg)
+        print((cond ? "  ok    " : "  FAILED  ") + msg)
         if !cond { ok = false }
     }
 
@@ -158,10 +158,10 @@ private func simulate(feedForward ff: Bool, seconds: Double) -> Bool {
         let expected = (1 / (1 + o.ppm * 1e-6) - 1) * 1e6
         let total = st.ppm_ff + st.ppm_pi
         let name = i == 0 ? "A" : "B"
-        print("uscita \(name): deriva reale \(o.ppm) ppm, blocco \(o.block)")
+        print("output \(name): real drift \(o.ppm) ppm, block \(o.block)")
         verdict(st.underruns == 0 && st.overruns == 0, "xrun \(st.underruns)/\(st.overruns)")
-        verdict(abs(total - expected) < 2, String(format: "correzione %+.2f ppm (attesa %+.2f)", total, expected))
-        verdict(maxAbsErr[i] < 64, String(format: "errore di riempimento max dopo 20 s: %.1f frame", maxAbsErr[i]))
+        verdict(abs(total - expected) < 2, String(format: "correction %+.2f ppm (expected %+.2f)", total, expected))
+        verdict(maxAbsErr[i] < 64, String(format: "max fill error after 20 s: %.1f frames", maxAbsErr[i]))
     }
 
     // qualità: frequenze viste dall'uscita = f / (fs * (1 + ppm))
@@ -175,12 +175,12 @@ private func simulate(feedForward ff: Bool, seconds: Double) -> Bool {
     verdict(a0.snrDb > 95, String(format: "A:1 1 kHz SNR %.1f dB", a0.snrDb))
     verdict(a1.snrDb > 95, String(format: "A:2 15 kHz SNR %.1f dB", a1.snrDb))
     verdict(b0.snrDb > 95, String(format: "B:1 1 kHz SNR %.1f dB", b0.snrDb))
-    verdict(abs(a0.amps[0] - 0.125) < 0.002, String(format: "A:1 guadagno cambiato a caldo: ampiezza %.4f (attesa 0.125)", a0.amps[0]))
-    verdict(abs(a1.amps[0] - 0.5) < 0.005, String(format: "A:2 risposta a 15 kHz: ampiezza %.4f (attesa 0.5)", a1.amps[0]))
-    verdict(ya[0].count == captureFrames && yb[0] == yb[1], "fan-out: B:1 e B:2 identici")
+    verdict(abs(a0.amps[0] - 0.125) < 0.002, String(format: "A:1 gain changed live: amplitude %.4f (expected 0.125)", a0.amps[0]))
+    verdict(abs(a1.amps[0] - 0.5) < 0.005, String(format: "A:2 15 kHz response: amplitude %.4f (expected 0.5)", a1.amps[0]))
+    verdict(ya[0].count == captureFrames && yb[0] == yb[1], "fan-out: B:1 and B:2 identical")
     verdict(abs(b2.amps[0] - 0.125) < 0.002 && abs(b2.amps[1] - 0.125) < 0.002,
-            String(format: "somma su B:3: %.4f + %.4f (attese 0.125)", b2.amps[0], b2.amps[1]))
-    verdict(b2.snrDb > 95, String(format: "B:3 somma SNR %.1f dB", b2.snrDb))
+            String(format: "sum on B:3: %.4f + %.4f (expected 0.125)", b2.amps[0], b2.amps[1]))
+    verdict(b2.snrDb > 95, String(format: "B:3 sum SNR %.1f dB", b2.snrDb))
     return ok
 }
 
@@ -220,6 +220,6 @@ func runBench(busCh: Int, outs nOut: Int, outCh: Int, block: Int) {
     let cpu = Double(DispatchTime.now().uptimeNanoseconds - t0) / 1e9
     var under: UInt64 = 0
     for o in 0..<nOut { var st = lb_output_stats(); lb_engine_get_output_stats(eng, UInt32(o), &st); under += st.underruns }
-    print(String(format: "bus %d canali → %d uscite × %d canali (%d rotte), blocco %d: %.1f%% di un core, xrun %llu",
+    print(String(format: "bus %d channels → %d outputs × %d channels (%d routes), block %d: %.1f%% of one core, xrun %llu",
                  busCh, nOut, outCh, routes.count, block, 100 * cpu / seconds, under))
 }

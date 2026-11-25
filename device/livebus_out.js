@@ -14,10 +14,10 @@ autowatch = 0;
 inlets = 1;
 outlets = 4;
 setinletassist(0, "bang = init, text <dest>, mode <0|1>, reassign");
-setoutletassist(0, "OSC verso udpsend");
-setoutletassist(1, "verso textedit");
-setoutletassist(2, "riga di stato 1");
-setoutletassist(3, "riga di stato 2");
+setoutletassist(0, "OSC to udpsend");
+setoutletassist(1, "to textedit");
+setoutletassist(2, "status line 1");
+setoutletassist(3, "status line 2");
 
 var STATUS_PATH = "/tmp/livebus-status.json";
 var PUSH_MS = 2000;
@@ -57,7 +57,7 @@ function init() {
     if (m) { var v = m.getvalueof(); mono = (isArray(v) ? Number(v[0]) : Number(v)) ? 1 : 0; }
     locate();
     if (!trackId) {
-        note = "metti il device su una traccia (non sul Master)";
+        note = "put the device on a track (not on the Master)";
         show();
         return;
     }
@@ -148,7 +148,7 @@ function setDict(api, prop, entry) {
         try { SET_FORMS[order[k]](api, prop, entry); } catch (err) { continue; }
         var cur = dictProp(api, prop);
         if (cur && String(cur.identifier) === String(entry.identifier)) {
-            if (setForm !== order[k]) post("R4F Out: LiveAPI.set forma " + order[k] + "\n");
+            if (setForm !== order[k]) post("R4F Out: LiveAPI.set form " + order[k] + "\n");
             setForm = order[k];
             return true;
         }
@@ -228,12 +228,12 @@ function choose(chans, want, used) {
 function claim(force) {
     var t = new LiveAPI("id " + trackId);
     var types = dictProp(t, "available_output_routing_types");
-    if (!isArray(types)) { note = "routing della traccia non leggibile"; return; }
+    if (!isArray(types)) { note = "track routing not readable"; return; }
     var ext = null;
     for (var i = 0; i < types.length; i++) if (isExt(types[i])) { ext = types[i]; break; }
     if (!ext) {
         bus = [];
-        note = "Ext. Out assente: in Preferenze > Audio scegli R4F BUS";
+        note = "no Ext. Out: in Settings > Audio choose R4F BUS";
         return;
     }
     var want = mono ? 1 : 2;
@@ -245,19 +245,19 @@ function claim(force) {
         if (cur && cur.length === want && !overlaps(cur, used.before)) { bus = cur; note = ""; return; }
     }
     if (!isExt(curT) && !setDict(t, "output_routing_type", ext)) {
-        note = "impossibile impostare Audio To su Ext. Out";
+        note = "could not set Audio To to Ext. Out";
         return;
     }
     var chans = dictProp(t, "available_output_routing_channels");
     var pick = choose(chans, want, used.all) || choose(chans, want === 2 ? 1 : 2, used.all);
-    if (!pick) { bus = []; note = "nessun canale libero sul bus"; return; }
+    if (!pick) { bus = []; note = "no free channel on the bus"; return; }
     if (!setDict(t, "output_routing_channel", pick.entry)) {
-        note = "impossibile scegliere il canale " + pick.entry.display_name;
+        note = "could not choose channel " + pick.entry.display_name;
         return;
     }
     bus = pick.nums;
     if (pick.nums.length === want) note = "";
-    else note = want === 2 ? "solo canali mono attivi in Live: L+R sommati" : "solo coppie stereo attive in Live";
+    else note = want === 2 ? "only mono channels enabled in Live: L+R summed" : "only stereo pairs enabled in Live";
 }
 
 // Senza destinazioni il device non tocca il routing: registra solo quello attuale.
@@ -292,7 +292,7 @@ function checkRouting() {
     var nb = n || [];
     if (String(nb) === String(bus)) return;
     bus = nb;
-    note = n ? "" : (spec ? "la traccia non va più sul bus: premi Riassegna" : "");
+    note = n ? "" : (spec ? "the track no longer goes to the bus: press Reassign" : "");
     push();
     show();
 }
@@ -353,24 +353,24 @@ function busLabel() {
 
 function show() {
     var l1, l2;
-    if (!started) l1 = note || "in attesa di Live";
+    if (!started) l1 = note || "waiting for Live";
     else if (note) l1 = note;
-    else if (!spec) l1 = bus.length ? "bus " + busLabel() + ", nessuna destinazione" : "scrivi le destinazioni, es. a:1-2";
+    else if (!spec) l1 = bus.length ? "bus " + busLabel() + ", no destination" : "type the destinations, e.g. a:1-2";
     else l1 = "bus " + busLabel() + " -> " + spec;
 
     var now = new Date().getTime() / 1000;
     if (!livebusAlive()) {
-        l2 = lastLaunch ? "R4F non risponde: avvio R4F..." : "R4F non in esecuzione";
+        l2 = lastLaunch ? "R4F not responding: starting R4F..." : "R4F not running";
     } else {
         var me = lbStatus.owners && lbStatus.owners[OWNER];
         if (me && me.error) {
-            l2 = "errore: " + me.error;
+            l2 = "error: " + me.error;
         } else {
             var outs = [];
             var list = lbStatus.outputs || [];
             for (var i = 0; i < list.length; i++) {
                 var o = list[i];
-                outs.push(o.id + ":1-" + o.channels + (o.running ? "" : " fermo") + (o.underruns ? " xrun " + o.underruns : "") + (o.clip ? " CLIP" : ""));
+                outs.push(o.id + ":1-" + o.channels + (o.running ? "" : " stopped") + (o.underruns ? " xrun " + o.underruns : "") + (o.clip ? " CLIP" : ""));
             }
             var lvl = "";
             if (bus.length && lbStatus.busPeaksDb) {
@@ -379,9 +379,9 @@ function show() {
                     var v = lbStatus.busPeaksDb[String(bus[j])];
                     if (typeof v === "number" && v > pk) pk = v;
                 }
-                lvl = pk > -1000 ? "  " + Math.round(pk) + " dB" : "  silenzio";
+                lvl = pk > -1000 ? "  " + Math.round(pk) + " dB" : "  silence";
             }
-            l2 = "ok - uscite " + outs.join(" ") + lvl;
+            l2 = "ok - outputs " + outs.join(" ") + lvl;
         }
     }
     outlet(2, "set", l1);

@@ -1,5 +1,33 @@
 # Changelog
 
+## 1.2.0 — interfaccia in inglese (2026-11-25)
+
+- **App in inglese**: menu, editor (elenco, matrice, testo, preset), avvisi, messaggi d'errore, stato, log e
+  righe di comando. Termini scelti: Outputs, Routes, List/Matrix/Text, Sum/1:1, Gain dB, Result,
+  Save and Apply, Configure R4F BUS…/BOX…, Add Output/Add Route.
+- **Device R4F Out in inglese**: righe di stato, pulsante *Reassign*, parametro *Mode* (era *Modo*: nei Set
+  già salvati il valore resta, cambia solo il nome mostrato).
+- **Installer**: pagine di benvenuto e conclusione in inglese.
+- `render-editor`: variabile `R4F_RENAME="uid=Nome;…"` per mostrare i dispositivi con un altro nome negli
+  screenshot (macOS dà i nomi nella lingua del sistema, es. "Altoparlanti MacBook Pro").
+  `examples/demo.json` usa l'UID dell'uscita del Mac invece del nome.
+- Screenshot in `docs/screenshots` rifatti in inglese; README aggiornato con i nuovi nomi dei comandi.
+- Test (selftest, logica, harness del device) allineati ai nuovi messaggi.
+
+- **Video guida per YouTube** (`video/make_video.py`): 16 scene (introduzione, installazione, R4F BUS,
+  editor, matrice/testo/preset, R4F BOX, device per Live), voce italiana `say` (Alice), schermate reali
+  dell'editor e schemi del README. Produce in `build/video/`: `R4F-guida.mp4` (1080p30, 3:11),
+  `R4F-guida.srt`, `R4F-miniatura.png` (1280×720) e `youtube.txt` (titolo, descrizione, capitoli, tag).
+  `--frames` genera solo i fotogrammi per controllarli.
+- **Video guida in inglese, animato** (schermate dell'app in inglese, menu inglese) (`video/make_video_en.py`): voce neurale Kokoro (`video/tts.py`, voce
+  `af_heart`, gira in locale in `build/tts`) al posto di `say`; ogni scena è disegnata fotogramma per fotogramma
+  con animazioni a tempo con le frasi: schemi di R4F BUS e R4F BOX col segnale che scorre e gli orologi delle
+  schede, cursore che clicca e trascina nelle matrici, zoom e riflettori sulle schermate, testo delle rotte
+  scritto in diretta, device R4F Out simulato. Clip delle scene in parallelo, volume normalizzato a -14 LUFS.
+  Produce in `build/video-en/`: `R4F-guide.mp4` (1080p30, 3:48), `R4F-guide.en.srt`, `R4F-thumbnail.png`,
+  `youtube.txt`. `--preview` crea un foglio di controllo, `--frame N t` un singolo fotogramma.
+  Nota: Pillow ignora la trasparenza del colore nel testo, quindi `ADraw` disegna il testo con una maschera.
+
 ## 1.1.1 — installer e guida (2026-11-24)
 
 - **Installer `R4F-1.1.1.pkg`** (`Scripts/build_installer.sh`): installa i driver R4F BUS e R4F BOX, l'app

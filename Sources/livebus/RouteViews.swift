@@ -45,7 +45,7 @@ struct RouteMatrixView: View {
             controls
             let cols = columns
             if cols.isEmpty {
-                Text("Aggiungi prima un'uscita.").foregroundStyle(.secondary)
+                Text("Add an output first.").foregroundStyle(.secondary)
             } else {
                 let w = left + CGFloat(cols.count) * cell + 8, h = top + CGFloat(rows.count) * cell + 8
                 GeometryReader { geo in
@@ -60,7 +60,7 @@ struct RouteMatrixView: View {
                 .background(Color(nsColor: .textBackgroundColor).opacity(0.5))
                 .clipShape(RoundedRectangle(cornerRadius: 6))
             }
-            Text(hover.isEmpty ? "Clic su una casella per collegare o scollegare; trascina per farne tante (in diagonale = uno a uno)." : hover)
+            Text(hover.isEmpty ? "Click a cell to connect or disconnect; drag to do many at once (diagonally = one-to-one)." : hover)
                 .font(.callout).foregroundStyle(.secondary).lineLimit(1)
             legend
         }
@@ -70,17 +70,17 @@ struct RouteMatrixView: View {
     private var controls: some View {
         HStack(spacing: 14) {
             HStack(spacing: 6) {
-                Text(m.isBox ? "Uscite della BOX da" : "Canali del bus da")
+                Text(m.isBox ? "BOX outputs from" : "Bus channels from")
                 TextField("", value: $fromBus, format: .number).frame(width: 48)
-                Text("a")
+                Text("to")
                 TextField("", value: $toBus, format: .number).frame(width: 48)
             }
             HStack(spacing: 6) {
-                Text("Nuovi collegamenti in")
+                Text("New connections in")
                 Picker("", selection: $group) {
-                    ForEach(m.groupNames, id: \.self) { n in Text(n.isEmpty ? "(senza nome)" : n).tag(n) }
+                    ForEach(m.groupNames, id: \.self) { n in Text(n.isEmpty ? "(untitled)" : n).tag(n) }
                     Divider()
-                    Text("Nuova rotta").tag(RouteMatrixView.newGroup)
+                    Text("New route").tag(RouteMatrixView.newGroup)
                 }
                 .labelsHidden().frame(width: 170)
             }
@@ -103,7 +103,7 @@ struct RouteMatrixView: View {
 
     private func targetGroup() -> String {
         if group == RouteMatrixView.newGroup || !m.groupNames.contains(group) {
-            group = m.uniqueName("Rotta")
+            group = m.uniqueName("Route")
         }
         return group
     }
@@ -118,7 +118,7 @@ struct RouteMatrixView: View {
             for (i, c) in cols.enumerated() {
                 let x = left + CGFloat(i) * cell
                 if c.first {
-                    ctx.draw(Text(m.isBox ? "ingressi della BOX" : c.out).font(.caption.weight(.semibold)), at: CGPoint(x: x + 2, y: 9), anchor: .leading)
+                    ctx.draw(Text(m.isBox ? "BOX inputs" : c.out).font(.caption.weight(.semibold)), at: CGPoint(x: x + 2, y: 9), anchor: .leading)
                     var p = Path(); p.move(to: CGPoint(x: x, y: 2)); p.addLine(to: CGPoint(x: x, y: size.height))
                     ctx.stroke(p, with: .color(.secondary.opacity(0.6)), lineWidth: 1.5)
                 }
@@ -158,10 +158,10 @@ struct RouteMatrixView: View {
                 if let hit = map[p] {
                     let n = m.routes[hit.row].name
                     let g = abs(hit.gainDb) < 0.01 ? "0 dB" : String(format: "%+.1f dB", hit.gainDb)
-                    hover = "bus \(p.src) → \(p.out):\(p.dst)  ·  \(n.isEmpty ? "(senza nome)" : n)  ·  \(g)  ·  clic per scollegare"
+                    hover = "bus \(p.src) → \(p.out):\(p.dst)  ·  \(n.isEmpty ? "(untitled)" : n)  ·  \(g)  ·  click to disconnect"
                 } else {
-                    let g = group == RouteMatrixView.newGroup ? "una nuova rotta" : "\"\(group)\""
-                    hover = "bus \(p.src) → \(p.out):\(p.dst)  ·  libero  ·  clic per collegare in \(g)"
+                    let g = group == RouteMatrixView.newGroup ? "a new route" : "\"\(group)\""
+                    hover = "bus \(p.src) → \(p.out):\(p.dst)  ·  free  ·  click to connect in \(g)"
                 }
             case .ended:
                 hover = ""
@@ -173,7 +173,7 @@ struct RouteMatrixView: View {
         let names = m.groupNames
         return VStack(alignment: .leading, spacing: 6) {
             if !names.isEmpty {
-                Text("Rotte (rinomina qui o nell'elenco)").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                Text("Routes (rename here or in the list)").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
             }
             ForEach(names, id: \.self) { n in
                 HStack(spacing: 8) {
@@ -184,7 +184,7 @@ struct RouteMatrixView: View {
                     }
                     .frame(width: 180)
                     let k = m.routes.filter { $0.name == n }.compactMap { m.links(of: $0)?.count }.reduce(0, +)
-                    Text(k == 1 ? "1 collegamento" : "\(k) collegamenti").font(.caption).foregroundStyle(.secondary)
+                    Text(k == 1 ? "1 connection" : "\(k) connections").font(.caption).foregroundStyle(.secondary)
                 }
             }
         }
@@ -198,7 +198,7 @@ private struct RenameField: View {
     @State private var text = ""
 
     var body: some View {
-        TextField("senza nome", text: $text)
+        TextField("untitled", text: $text)
             .onAppear { text = name }
             .onChange(of: name) { text = $0 }
             .onSubmit { if text != name { commit(text) } }
@@ -220,17 +220,17 @@ struct RoutesTextView: View {
                 .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.secondary.opacity(0.3)))
                 .onChange(of: text) { errors = m.applyText($0) }
             if errors.isEmpty {
-                Label("Testo valido: le rotte sono aggiornate.", systemImage: "checkmark.circle.fill")
+                Label("Valid text: routes updated.", systemImage: "checkmark.circle.fill")
                     .font(.callout).foregroundStyle(.green)
             } else {
                 ForEach(errors.prefix(6), id: \.self) { e in
                     Label(e, systemImage: "xmark.octagon.fill").font(.callout).foregroundStyle(.red)
                 }
-                Text("Finché c'è un errore le rotte restano quelle di prima.").font(.caption).foregroundStyle(.secondary)
+                Text("While there is an error, the previous routes stay in place.").font(.caption).foregroundStyle(.secondary)
             }
-            Text("Una rotta per riga:  Nome: canali -> uscita:canali  (->  somma,  =>  1:1)   ·   più uscite separate da spazio   ·   "
-                 + "@dB per il guadagno   ·   # per i commenti.\nEsempi:   " + (m.isBox
-                    ? "Zoom: 1-2 => in:5-6      Mix: 1-4 -> in:1-2 @-3      Copia: 3 -> in:3,10"
+            Text("One route per line:  Name: channels -> output:channels  (->  sum,  =>  1:1)   ·   several outputs separated by spaces   ·   "
+                 + "@dB for gain   ·   # for comments.\nExamples:   " + (m.isBox
+                    ? "Zoom: 1-2 => in:5-6      Mix: 1-4 -> in:1-2 @-3      Copy: 3 -> in:3,10"
                     : "Main: 1-2 => mac:1-2      Mono: 3-4 -> a:1-2      Sub: 9 -> a:7-8 @-3"))
                 .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
         }
@@ -255,10 +255,10 @@ struct PresetSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Aggiungi un preset").font(.title3.weight(.semibold))
+            Text("Add a Preset").font(.title3.weight(.semibold))
             Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 10) {
                 GridRow {
-                    Text("Formato")
+                    Text("Format")
                     Picker("", selection: $index) {
                         ForEach(ConfigEditorModel.presets.indices, id: \.self) { i in Text(ConfigEditorModel.presets[i].title).tag(i) }
                     }
@@ -266,33 +266,33 @@ struct PresetSheet: View {
                 }
                 if preset.hasOrders {
                     GridRow {
-                        Text("Ordine nella DAW")
+                        Text("Order in the DAW")
                         orderPicker($dawOrder)
                     }
                     GridRow {
-                        Text("Ordine sugli altoparlanti")
+                        Text("Order on the speakers")
                         orderPicker($speakerOrder)
                     }
                 }
                 GridRow {
-                    Text(m.isBox ? "Uscite della BOX" : "Canali del bus")
+                    Text(m.isBox ? "BOX outputs" : "Bus channels")
                     HStack {
                         TextField("", value: $busStart, format: .number).frame(width: 56)
                         Text("– \(busStart + preset.count - 1)").foregroundStyle(.secondary)
                     }
                 }
                 GridRow {
-                    Text("Uscita")
+                    Text("Output")
                     HStack {
                         Picker("", selection: $out) { ForEach(m.outputs) { o in Text(o.name).tag(o.name) } }
                             .labelsHidden().frame(width: 120)
-                        Text("dal canale")
+                        Text("from channel")
                         TextField("", value: $outStart, format: .number).frame(width: 56)
                         Text("– \(outStart + preset.count - 1)").foregroundStyle(.secondary)
                     }
                 }
                 GridRow {
-                    Text("Nome della rotta")
+                    Text("Route name")
                     TextField("", text: $name).frame(width: 200)
                 }
             }
@@ -303,8 +303,8 @@ struct PresetSheet: View {
             }
             HStack {
                 Spacer()
-                Button("Annulla") { isPresented = false }.keyboardShortcut(.cancelAction)
-                Button("Aggiungi") {
+                Button("Cancel") { isPresented = false }.keyboardShortcut(.cancelAction)
+                Button("Add") {
                     let nm = name.trimmingCharacters(in: .whitespaces)
                     m.routes += m.presetRoutes(preset, dawOrder: dawOrder, speakerOrder: speakerOrder, busStart: busStart,
                                                out: out, outStart: outStart, name: nm.isEmpty ? preset.title : nm)
@@ -351,7 +351,7 @@ struct PresetSheet: View {
             return "bus \(busStart + i) \(label) → \(out):\(outStart + j)"
         }
         return VStack(alignment: .leading, spacing: 4) {
-            Text("Collegamenti").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+            Text("Connections").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), alignment: .leading)], alignment: .leading, spacing: 3) {
                 ForEach(items, id: \.self) { Text($0).font(.system(.caption, design: .monospaced)) }
             }

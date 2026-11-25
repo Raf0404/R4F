@@ -25,7 +25,7 @@ struct R4FEditorView: View {
                 .pickerStyle(.segmented).labelsHidden().frame(width: 280)
                 Spacer()
                 if bus.isDirty || box.isDirty {
-                    Text("modifiche non salvate: " + [bus.isDirty ? "BUS" : nil, box.isDirty ? "BOX" : nil].compactMap { $0 }.joined(separator: ", "))
+                    Text("unsaved changes: " + [bus.isDirty ? "BUS" : nil, box.isDirty ? "BOX" : nil].compactMap { $0 }.joined(separator: ", "))
                         .font(.caption).foregroundStyle(.orange)
                 }
             }
@@ -63,7 +63,7 @@ final class ConfigEditorWindow: NSObject, NSWindowDelegate {
         if window == nil {
             let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 940, height: 760),
                              styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
-            w.title = "R4F — Configurazione"
+            w.title = "R4F — Configuration"
             w.isReleasedWhenClosed = false
             w.delegate = self
             w.contentView = NSHostingView(rootView: R4FEditorView(bus: model, box: boxModel, tab: tab,
@@ -101,23 +101,23 @@ final class ConfigEditorWindow: NSObject, NSWindowDelegate {
     // MARK: R4F BUS
 
     private func newFromDevices() {
-        guard confirmDiscard(model, "Creare una configurazione nuova dai dispositivi collegati?") else { return }
-        do { try model.loadDefaults() } catch { alert("Impossibile creare la configurazione", "\(error)") }
+        guard confirmDiscard(model, "Create a new configuration from the connected devices?") else { return }
+        do { try model.loadDefaults() } catch { alert("Could not create the configuration", "\(error)") }
     }
 
     private func open() {
-        guard confirmDiscard(model, "Aprire un'altra configurazione?") else { return }
+        guard confirmDiscard(model, "Open another configuration?") else { return }
         let p = NSOpenPanel()
         p.allowedContentTypes = [.json]
         p.directoryURL = URL(fileURLWithPath: MenuBarApp.supportDir)
-        p.message = "Scegli una configurazione di R4F BUS"
+        p.message = "Choose an R4F BUS configuration"
         guard p.runModal() == .OK, let url = p.url else { return }
-        do { try model.loadFile(url.path) } catch { alert("Configurazione non valida", "\(error)") }
+        do { try model.loadFile(url.path) } catch { alert("Invalid configuration", "\(error)") }
     }
 
     private func revert() {
         guard let p = model.path else { return }
-        do { try model.loadFile(p) } catch { alert("Impossibile rileggere il file", "\(error)") }
+        do { try model.loadFile(p) } catch { alert("Could not reload the file", "\(error)") }
     }
 
     @discardableResult
@@ -132,7 +132,7 @@ final class ConfigEditorWindow: NSObject, NSWindowDelegate {
         p.allowedContentTypes = [.json]
         p.directoryURL = URL(fileURLWithPath: (model.path as NSString?)?.deletingLastPathComponent ?? MenuBarApp.supportDir)
         p.nameFieldStringValue = (model.path as NSString?)?.lastPathComponent ?? "config.json"
-        p.message = "Salva la configurazione (R4F BUS passerà a usare questo file)"
+        p.message = "Save the configuration (R4F BUS will switch to this file)"
         guard p.runModal() == .OK, let url = p.url else { return false }
         return write(url.path)
     }
@@ -144,7 +144,7 @@ final class ConfigEditorWindow: NSObject, NSWindowDelegate {
             onSaved(p)
             return true
         } catch {
-            alert("Salvataggio non riuscito", "\(error)")
+            alert("Save failed", "\(error)")
             return false
         }
     }
@@ -159,13 +159,13 @@ final class ConfigEditorWindow: NSObject, NSWindowDelegate {
             try R4FBox.save(cfg)
             boxModel.markSavedExternally()
         } catch {
-            alert("Salvataggio di R4F BOX non riuscito", "\(error)")
+            alert("Could not save R4F BOX", "\(error)")
             return false
         }
         let msg = R4FBox.syncFromFile()
         onBoxSaved(msg)
         if R4FBox.device() == nil {
-            alert("Matrice salvata", "R4F BOX non è installato: la matrice verrà applicata appena lo installi (sudo driver/install.sh box).")
+            alert("Matrix saved", "R4F BOX is not installed: the matrix will be applied as soon as you install it (sudo driver/install.sh box).")
         }
         return true
     }
@@ -176,11 +176,11 @@ final class ConfigEditorWindow: NSObject, NSWindowDelegate {
         let dirty = [model.isDirty ? "R4F BUS" : nil, boxModel.isDirty ? "R4F BOX" : nil].compactMap { $0 }
         guard !dirty.isEmpty else { return true }
         let a = NSAlert()
-        a.messageText = "Salvare le modifiche a \(dirty.joined(separator: " e "))?"
-        a.informativeText = "Se non salvi, R4F continua con la configurazione precedente."
-        a.addButton(withTitle: "Salva e applica")
-        a.addButton(withTitle: "Non salvare")
-        a.addButton(withTitle: "Annulla")
+        a.messageText = "Save the changes to \(dirty.joined(separator: " and "))?"
+        a.informativeText = "If you don't save, R4F keeps using the previous configuration."
+        a.addButton(withTitle: "Save and Apply")
+        a.addButton(withTitle: "Don't Save")
+        a.addButton(withTitle: "Cancel")
         switch a.runModal() {
         case .alertFirstButtonReturn:
             var ok = true
@@ -200,9 +200,9 @@ final class ConfigEditorWindow: NSObject, NSWindowDelegate {
         guard m.isDirty else { return true }
         let a = NSAlert()
         a.messageText = question
-        a.informativeText = "Le modifiche non salvate andranno perse."
-        a.addButton(withTitle: "Continua")
-        a.addButton(withTitle: "Annulla")
+        a.informativeText = "Unsaved changes will be lost."
+        a.addButton(withTitle: "Continue")
+        a.addButton(withTitle: "Cancel")
         return a.runModal() == .alertFirstButtonReturn
     }
 
@@ -220,18 +220,25 @@ func renderEditor(to out: String, config: String?, dark: Bool, mode: Int = 0, bo
     let app = NSApplication.shared
     app.setActivationPolicy(.prohibited)
     app.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
-    let model = ConfigEditorModel()
-    let boxModel = ConfigEditorModel()
+    // R4F_RENAME="uid=Nome;uid2=Nome2": nomi dei dispositivi da mostrare (screenshot per la documentazione,
+    // indipendenti dalla lingua del Mac che li disegna)
+    var devices = CoreAudioHelpers.allDevices()
+    for pair in (ProcessInfo.processInfo.environment["R4F_RENAME"] ?? "").split(separator: ";") {
+        let kv = pair.split(separator: "=", maxSplits: 1).map(String.init)
+        if kv.count == 2 { for i in devices.indices where devices[i].uid == kv[0] { devices[i].name = kv[1] } }
+    }
+    let model = ConfigEditorModel(devices: devices)
+    let boxModel = ConfigEditorModel(devices: devices)
     do {
         if let c = config { try model.loadFile(c) } else { try model.loadDefaults() }
-    } catch { fputs("errore: \(error)\n", stderr); exit(1) }
+    } catch { fputs("error: \(error)\n", stderr); exit(1) }
     boxModel.loadBox(R4FBox.load(), device: R4FBox.device())
     if box && boxModel.routes.count < 3 {
         // esempio: un programma su 1-2 verso 5-6, un mix di 4 canali su uno, 1:1 per il resto
         boxModel.routes = [
             .init(name: "Zoom", from: "1-2", out: R4FBox.inputsId, channels: "5-6", gainDb: ""),
             .init(name: "Mix", from: "3-6", out: R4FBox.inputsId, channels: "1", gainDb: "-3"),
-            .init(name: "Resto 1:1", from: "7-32", out: R4FBox.inputsId, channels: "7-32", gainDb: ""),
+            .init(name: "Rest 1:1", from: "7-32", out: R4FBox.inputsId, channels: "7-32", gainDb: ""),
         ]
     } else if !box && model.routes.count < 3 {
         if !model.outputs.contains(where: { $0.device.contains("BlackHole") }),
@@ -242,7 +249,7 @@ func renderEditor(to out: String, config: String?, dark: Bool, mode: Int = 0, bo
         let target = model.outputs.last?.name ?? ""
         let p51 = ConfigEditorModel.presets.first { $0.id == "5.1" }!
         model.routes += model.presetRoutes(p51, dawOrder: 1, speakerOrder: 0, busStart: 3, out: target, outStart: 1, name: "5.1")
-        model.routes.append(.init(name: "Voce", from: "9-10", out: target, channels: "9", gainDb: "-3"))
+        model.routes.append(.init(name: "Vocals", from: "9-10", out: target, channels: "9", gainDb: "-3"))
     }
     let tab = EditorTab()
     tab.kind = box ? .box : .bus
@@ -266,6 +273,6 @@ func renderEditor(to out: String, config: String?, dark: Bool, mode: Int = 0, bo
     guard let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { exit(1) }
     view.cacheDisplay(in: view.bounds, to: rep)
     guard let png = rep.representation(using: .png, properties: [:]) else { exit(1) }
-    do { try png.write(to: URL(fileURLWithPath: out)) } catch { fputs("errore: \(error)\n", stderr); exit(1) }
+    do { try png.write(to: URL(fileURLWithPath: out)) } catch { fputs("error: \(error)\n", stderr); exit(1) }
     print("ok: \(out)")
 }

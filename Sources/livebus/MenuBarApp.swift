@@ -78,9 +78,9 @@ final class MenuBarApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
         do {
             let cfg = try DefaultConfig.make(devices: CoreAudioHelpers.allDevices())
             try DefaultConfig.write(cfg, to: path)
-            print("creata la configurazione iniziale: \(path)")
+            print("created the initial configuration: \(path)")
         } catch {
-            print("impossibile creare la configurazione iniziale: \(error)")
+            print("could not create the initial configuration: \(error)")
         }
     }
 
@@ -96,13 +96,13 @@ final class MenuBarApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let clip = controller.router?.hasClip ?? false
             let loop = controller.router?.loopWarning != nil
             symbol = (xr || clip || loop) ? "exclamationmark.circle" : "hifispeaker.2.fill"
-            tip += clip ? " — CLIP su un'uscita" : xr ? " — in esecuzione, con xrun" : " — in esecuzione"
+            tip += clip ? " — CLIP on an output" : xr ? " — running, with xruns" : " — running"
         case .stopped:
             symbol = "hifispeaker.2"
-            tip += " — fermo"
+            tip += " — stopped"
         case .failed(let m):
             symbol = "exclamationmark.triangle"
-            tip += " — errore: " + m
+            tip += " — error: " + m
         }
         if button.image?.accessibilityDescription != symbol {
             let img = NSImage(systemSymbolName: symbol, accessibilityDescription: symbol)
@@ -120,44 +120,44 @@ final class MenuBarApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
         switch controller.state {
         case .running:
             let r = controller.router!
-            info("R4F BUS in esecuzione")
-            info("bus: \(r.bus.name) (\(r.bus.inputChannels) canali)")
+            info("R4F BUS running")
+            info("bus: \(r.bus.name) (\(r.bus.inputChannels) channels)")
             for line in r.outputLines() { info("  " + line) }
             if let w = r.loopWarning { for part in wrap("⚠︎ " + w, 70) { info(part) } }
             let n = r.deviceCount
-            if n > 0 { info("device R4F Out (Ableton Live) collegati: \(n)") }
+            if n > 0 { info("R4F Out devices (Ableton Live) connected: \(n)") }
         case .stopped:
-            info("R4F BUS fermo")
+            info("R4F BUS stopped")
         case .failed(let m):
-            info("Errore — nuovo tentativo ogni 5 s")
+            info("Error — retrying every 5 s")
             for part in wrap(m, 70) { info("  " + part) }
         }
         info(boxStatus.isEmpty ? "R4F BOX" : boxStatus)
         menu.addItem(.separator())
         if controller.isRunning {
-            item("Ferma", #selector(stopRouter))
-            item("Riavvia", #selector(restartRouter))
+            item("Stop", #selector(stopRouter))
+            item("Restart", #selector(restartRouter))
         } else {
-            item("Avvia", #selector(startRouter))
+            item("Start", #selector(startRouter))
         }
         menu.addItem(.separator())
         info("config: " + (controller.configPath as NSString).abbreviatingWithTildeInPath)
-        item("Configura R4F BUS…", #selector(openEditor), key: ",")
-        item("Configura R4F BOX…", #selector(openBoxEditor))
-        item("Nuova configurazione BUS…", #selector(newConfig))
-        item("Scegli configurazione…", #selector(chooseConfig))
-        item("Apri il file JSON", #selector(editConfig))
+        item("Configure R4F BUS…", #selector(openEditor), key: ",")
+        item("Configure R4F BOX…", #selector(openBoxEditor))
+        item("New BUS Configuration…", #selector(newConfig))
+        item("Choose Configuration…", #selector(chooseConfig))
+        item("Open JSON File", #selector(editConfig))
         if controller.configPath != MenuBarApp.defaultConfig {
-            item("Usa la configurazione predefinita", #selector(useDefaultConfig))
+            item("Use Default Configuration", #selector(useDefaultConfig))
         }
-        let devItem = NSMenuItem(title: "Dispositivi audio (clic = copia il nome)", action: nil, keyEquivalent: "")
+        let devItem = NSMenuItem(title: "Audio Devices (click = copy name)", action: nil, keyEquivalent: "")
         devItem.submenu = devicesMenu()
         menu.addItem(devItem)
-        item("Mostra il log", #selector(showLog))
+        item("Show Log", #selector(showLog))
         menu.addItem(.separator())
-        let login = item("Avvia all'accesso", #selector(toggleLogin))
+        let login = item("Launch at Login", #selector(toggleLogin))
         login.state = SMAppService.mainApp.status == .enabled ? .on : .off
-        item("Esci da R4F", #selector(quit), key: "q")
+        item("Quit R4F", #selector(quit), key: "q")
     }
 
     private func info(_ title: String) {
@@ -177,7 +177,7 @@ final class MenuBarApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func devicesMenu() -> NSMenu {
         let m = NSMenu()
         for d in CoreAudioHelpers.allDevices() {
-            var kind = d.isVirtual ? "virtuale" : d.isAggregate ? "aggregato" : d.isBuiltIn ? "integrato" : "scheda"
+            var kind = d.isVirtual ? "virtual" : d.isAggregate ? "aggregate" : d.isBuiltIn ? "built-in" : "interface"
             kind += ", in \(d.inputChannels) / out \(d.outputChannels)"
             let it = NSMenuItem(title: "\(d.name)  (\(kind))", action: #selector(copyName(_:)), keyEquivalent: "")
             it.target = self
@@ -248,7 +248,7 @@ final class MenuBarApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 self.setConfig(path)
             } else {
                 self.controller.watchConfig()
-                self.controller.restartSoon("configurazione salvata dall'editor", delay: 0.3)
+                self.controller.restartSoon("configuration saved from the editor", delay: 0.3)
             }
         }
         e.onClose = { [weak self] in self?.editor = nil }
@@ -283,7 +283,7 @@ final class MenuBarApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if !fm.fileExists(atPath: MenuBarApp.defaultConfig), fm.fileExists(atPath: oldCfg) {
             try? fm.createDirectory(atPath: MenuBarApp.supportDir, withIntermediateDirectories: true)
             if (try? fm.copyItem(atPath: oldCfg, toPath: MenuBarApp.defaultConfig)) != nil {
-                print("configurazione copiata da \(oldCfg)")
+                print("configuration copied from \(oldCfg)")
             }
         }
         let path = controller.configPath
@@ -297,9 +297,9 @@ final class MenuBarApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
         cfg.bus = r4f.name
         do {
             try DefaultConfig.write(cfg, to: path)
-            print("bus aggiornato: \(old) → \(r4f.name) (copia: \(backup))")
+            print("bus updated: \(old) → \(r4f.name) (backup: \(backup))")
         } catch {
-            print("migrazione del bus non riuscita: \(error)")
+            print("bus migration failed: \(error)")
         }
     }
 
@@ -307,7 +307,7 @@ final class MenuBarApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let p = NSOpenPanel()
         p.allowedContentTypes = [.json]
         p.directoryURL = URL(fileURLWithPath: (controller.configPath as NSString).deletingLastPathComponent)
-        p.message = "Scegli la configurazione di R4F BUS"
+        p.message = "Choose the R4F BUS configuration"
         NSApp.activate(ignoringOtherApps: true)
         guard p.runModal() == .OK, let url = p.url else { return }
         setConfig(url.path)
@@ -343,8 +343,8 @@ final class MenuBarApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
         } catch {
             let a = NSAlert()
-            a.messageText = "Avvio all'accesso non riuscito"
-            a.informativeText = "\(error.localizedDescription)\n\nIn alternativa aggiungi R4F in Impostazioni di Sistema → Generali → Elementi login."
+            a.messageText = "Could not enable Launch at Login"
+            a.informativeText = "\(error.localizedDescription)\n\nAlternatively, add R4F in System Settings → General → Login Items."
             NSApp.activate(ignoringOtherApps: true)
             a.runModal()
         }
@@ -361,7 +361,7 @@ func runMenuBarApp() -> Never {
         freopen(MenuBarApp.logPath, "a", stderr)
         setvbuf(stdout, nil, _IOLBF, 0)
     }
-    print("\n— R4F avviato \(Date())")
+    print("\n— R4F started \(Date())")
     let app = NSApplication.shared
     let delegate = MenuBarApp()
     app.delegate = delegate

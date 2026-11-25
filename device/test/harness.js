@@ -166,7 +166,7 @@ console.log("— 1. traccia sul Master, destinazioni salvate nel Set —");
     check(JSON.stringify(d.last()) === JSON.stringify(["/livebus/set", d.owner(), "3,4", "a:1-2 b:5@-6", 0]), "OSC /livebus/set con bus 3,4");
     check(d.ui.text === "a:1-2 b:5@-6", "textedit ripristinato dal pattr");
     check(/bus 3\/4 -> a:1-2/.test(d.ui.l1), "riga 1: " + d.ui.l1);
-    check(/ok - uscite a:1-64 b:1-8\s+-12 dB/.test(d.ui.l2), "riga 2 mostra uscite e livello: " + d.ui.l2);
+    check(/ok - outputs a:1-64 b:1-8\s+-12 dB/.test(d.ui.l2), "riga 2 mostra uscite e livello: " + d.ui.l2);
     check(vm.runInContext("setForm", d.ctx) === 0, "forma di set scoperta (JSON con identifier)");
 
     console.log("— 2. passaggio a mono —");
@@ -179,7 +179,7 @@ console.log("— 1. traccia sul Master, destinazioni salvate nel Set —");
     live.notify(t, "output_routing_type");
     d.runTasks();
     check(d.last()[0] === "/livebus/release", "rotte rilasciate");
-    check(/Riassegna/.test(d.ui.l1), "invita a premere Riassegna: " + d.ui.l1);
+    check(/Reassign/.test(d.ui.l1), "invita a premere Riassegna: " + d.ui.l1);
     const setsBefore = live.sets;
     d.tick();
     check(live.sets === setsBefore, "il device non riprende il routing da solo");
@@ -204,15 +204,15 @@ console.log("— 1. traccia sul Master, destinazioni salvate nel Set —");
     check(d.last()[3] === "a:3-4 b:7@-3", "'text' doppio di textedit tolto");
 
     console.log("— 6. errore riportato da livebus —");
-    st.v = statusDoc({ [d.owner()]: { error: "uscita 'c' sconosciuta (disponibili: a, b)" } }).v;
+    st.v = statusDoc({ [d.owner()]: { error: "unknown output 'c' (available: a, b)" } }).v;
     d.tick();
-    check(/errore: uscita 'c'/.test(d.ui.l2), "riga 2: " + d.ui.l2);
+    check(/error: unknown output 'c'/.test(d.ui.l2), "riga 2: " + d.ui.l2);
     st.v = statusDoc({}, { time: Date.now() / 1000 - 30 }).v;
     d.tick();
-    check(/R4F non (in esecuzione|risponde)/.test(d.ui.l2), "stato vecchio → R4F non risponde: " + d.ui.l2);
+    check(/R4F not (running|responding)/.test(d.ui.l2), "stato vecchio → R4F non risponde: " + d.ui.l2);
     check(d.launches.length === 1 && d.launches[0].join(" ") === "max launchbrowser r4f://start",
           "R4F fermo → apre R4F via r4f://start");
-    check(/avvio R4F/.test(d.ui.l2), "riga 2: " + d.ui.l2);
+    check(/starting R4F/.test(d.ui.l2), "riga 2: " + d.ui.l2);
     st.v = null;
     d.tick(); d.tick();
     check(d.launches.length === 1, "al massimo un tentativo ogni 30 s");
@@ -269,7 +269,7 @@ console.log("— 10. sul Master, senza Ext. Out, solo coppie, nome localizzato �
 {
     const m = makeDevice(makeLive({ tracks: [{}] }), ["Track:master"], encodeURIComponent("a:1"), statusDoc());
     m.call("bang");
-    check(/non sul Master/.test(m.ui.l1) && m.sent.length === 0, "Master: avviso, nessun OSC");
+    check(/not on the Master/.test(m.ui.l1) && m.sent.length === 0, "Master: avviso, nessun OSC");
 
     const noExt = makeLive({ ext: false, acceptForm: "json-id", tracks: [{}] });
     const d = makeDevice(noExt, ["Track:0"], encodeURIComponent("a:1-2"), statusDoc());
@@ -280,7 +280,7 @@ console.log("— 10. sul Master, senza Ext. Out, solo coppie, nome localizzato �
     const p = makeDevice(pairs, ["Track:0"], encodeURIComponent("b:3"), statusDoc());
     p.modeObj.v = 1;
     p.call("bang");
-    check(pairs.tracks[0].chan.display_name === "3/4" && /solo coppie/.test(p.ui.l1), "mono richiesto ma solo coppie: usa 3/4 e lo dice");
+    check(pairs.tracks[0].chan.display_name === "3/4" && /only stereo pairs/.test(p.ui.l1), "mono richiesto ma solo coppie: usa 3/4 e lo dice");
 
     const ita = makeLive({ extName: "Est. Out", acceptForm: "json-id", tracks: [{}] });
     const i = makeDevice(ita, ["Track:0"], encodeURIComponent("a:1-2"), statusDoc());

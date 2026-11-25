@@ -120,7 +120,7 @@ final class OSCServer {
 
     init(port: UInt16, handler: @escaping (OSCMessage) -> Void) throws {
         let sock = socket(AF_INET, SOCK_DGRAM, 0)
-        guard sock >= 0 else { throw LBError("impossibile aprire il socket OSC") }
+        guard sock >= 0 else { throw LBError("could not open the OSC socket") }
         var reuse: Int32 = 1
         setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &reuse, socklen_t(MemoryLayout<Int32>.size))
         var addr = sockaddr_in()
@@ -133,8 +133,8 @@ final class OSCServer {
         }
         guard r == 0 else {
             close(sock)
-            throw LBError("porta OSC \(port) già in uso: probabilmente c'è un altro livebus in esecuzione. "
-                + "Fermalo con Ctrl-C nel suo terminale (oppure: pkill -f \"livebus run\"), poi riprova.")
+            throw LBError("OSC port \(port) already in use: another livebus is probably running. "
+                + "Stop it with Ctrl-C in its terminal (or: pkill -f \"livebus run\"), then try again.")
         }
         fd = sock
         self.handler = handler

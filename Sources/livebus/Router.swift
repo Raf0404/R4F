@@ -40,16 +40,16 @@ final class Router {
             busDev = CoreAudioHelpers.device(busDev.id)
         }
 
-        guard !config.outputs.isEmpty else { throw LBError("nessuna uscita in configurazione") }
+        guard !config.outputs.isEmpty else { throw LBError("no outputs in the configuration") }
         var resolved: [(OutputSpec, AudioDevice)] = []
         var seenIds = Set<String>(), seenDevs = Set<AudioObjectID>()
         for spec in config.outputs {
             guard !spec.id.isEmpty, !spec.id.contains(":"), !spec.id.contains("@"), !spec.id.contains(" ") else {
-                throw LBError("id uscita non valido: '\(spec.id)' (niente spazi, ':' o '@')")
+                throw LBError("invalid output id: '\(spec.id)' (no spaces, ':' or '@')")
             }
-            guard seenIds.insert(spec.id).inserted else { throw LBError("id uscita duplicato: \(spec.id)") }
+            guard seenIds.insert(spec.id).inserted else { throw LBError("duplicate output id: \(spec.id)") }
             var dev = try CoreAudioHelpers.find(spec.device, in: devices, direction: .output)
-            guard seenDevs.insert(dev.id).inserted else { throw LBError("il dispositivo '\(dev.name)' è usato da due uscite") }
+            guard seenDevs.insert(dev.id).inserted else { throw LBError("the device '\(dev.name)' is used by two outputs") }
             if let bf = config.bufferFrames {
                 CoreAudioHelpers.setBufferFrames(dev.id, bf)
                 dev = CoreAudioHelpers.device(dev.id)
@@ -80,7 +80,7 @@ final class Router {
         let chans = resolved.map { UInt32($0.1.outputChannels) }
         guard let eng = lb_engine_create(UInt32(busDev.inputChannels), busRate, AudioGetHostClockFrequency(),
                                          UInt32(resolved.count), chans, 8192, UInt32(ring)) else {
-            throw LBError("impossibile creare il motore (canali del bus: \(busDev.inputChannels))")
+            throw LBError("could not create the engine (bus channels: \(busDev.inputChannels))")
         }
 
         let ff = config.feedForward ?? true
@@ -117,14 +117,14 @@ final class Router {
     func start() throws {
         for i in outputs.indices {
             var pid: AudioDeviceIOProcID?
-            try check(lb_create_output_proc(engine, UInt32(i), outputs[i].device.id, &pid), "IOProc uscita \(outputs[i].id)")
+            try check(lb_create_output_proc(engine, UInt32(i), outputs[i].device.id, &pid), "output IOProc \(outputs[i].id)")
             outputs[i].procID = pid
-            try check(AudioDeviceStart(outputs[i].device.id, pid), "avvio uscita \(outputs[i].id)")
+            try check(AudioDeviceStart(outputs[i].device.id, pid), "starting output \(outputs[i].id)")
         }
         var pid: AudioDeviceIOProcID?
-        try check(lb_create_input_proc(engine, bus.id, &pid), "IOProc bus")
+        try check(lb_create_input_proc(engine, bus.id, &pid), "bus IOProc")
         inputProc = pid
-        try check(AudioDeviceStart(bus.id, pid), "avvio bus")
+        try check(AudioDeviceStart(bus.id, pid), "starting bus")
     }
 
     func stop() {
@@ -163,14 +163,14 @@ final class Router {
         let busOuts = Set(outputs.indices.filter { outputs[$0].device.id == bus.id })
         let bad = LoopGuard.loopingKeys(merged, busOutputs: busOuts)
         if bad.isEmpty {
-            if loopWarning != nil { print("anello nel bus risolto") }
+            if loopWarning != nil { print("bus loop resolved") }
             loopWarning = nil
         } else {
             for k in bad { merged[k] = nil }
             let list = bad.sorted { ($0.src, $0.dst) < ($1.src, $1.dst) }.prefix(4)
                 .map { "bus \($0.src + 1) → \(outputs[$0.out].id):\($0.dst + 1)" }.joined(separator: ", ")
-            let w = "rotte scartate perché rimandano il segnale nel bus da cui viene (anello): \(list)"
-            if w != loopWarning { print("ATTENZIONE: " + w) }
+            let w = "routes dropped because they send the signal back into the bus it comes from (loop): \(list)"
+            if w != loopWarning { print("WARNING: " + w) }
             loopWarning = w
         }
         var arr = merged.map {
@@ -181,10 +181,10 @@ final class Router {
 
     /// Rotta manuale (OSC route/unroute). Canali 1-based. gain 0 = rimuovi.
     func setRoute(src: Int, out: Int, dst: Int, gain: Float) throws {
-        guard src >= 1, src <= bus.inputChannels else { throw LBError("canale bus \(src) fuori intervallo 1-\(bus.inputChannels)") }
-        guard out >= 0, out < outputs.count else { throw LBError("uscita \(out) inesistente") }
+        guard src >= 1, src <= bus.inputChannels else { throw LBError("bus channel \(src) out of range 1-\(bus.inputChannels)") }
+        guard out >= 0, out < outputs.count else { throw LBError("output \(out) does not exist") }
         guard dst >= 1, dst <= outputs[out].device.outputChannels else {
-            throw LBError("canale \(dst) fuori intervallo per \(outputs[out].id) (1-\(outputs[out].device.outputChannels))")
+            throw LBError("channel \(dst) out of range for \(outputs[out].id) (1-\(outputs[out].device.outputChannels))")
         }
         lock.lock(); defer { lock.unlock() }
         let changed = book.edit("manual", now: now()) { $0[RouteKey(src: src - 1, out: out, dst: dst - 1)] = gain > 0 ? gain : nil }
@@ -210,14 +210,14 @@ final class Router {
             lock.lock(); defer { lock.unlock() }
             let isNew = book.owners[owner] == nil || book.owners[owner]?.dest != dest || book.owners[owner]?.src != src
             if book.set(owner, routes: r, src: src, dest: dest, now: t, expires: true) { applyLocked() }
-            if isNew { print("device \(owner): bus \(src.isEmpty ? "-" : src) → \(dest.isEmpty ? "-" : dest) (\(r.count) rotte)") }
+            if isNew { print("device \(owner): bus \(src.isEmpty ? "-" : src) → \(dest.isEmpty ? "-" : dest) (\(r.count) routes)") }
             return nil
         } catch {
             let msg = "\(error)"
             lock.lock(); defer { lock.unlock() }
             let old = book.owners[owner]
             if book.set(owner, routes: [:], src: src, dest: dest, now: t, expires: true, error: msg) { applyLocked() }
-            if old?.error != msg { print("device \(owner): errore — \(msg)") }
+            if old?.error != msg { print("device \(owner): error — \(msg)") }
             return msg
         }
     }
@@ -226,7 +226,7 @@ final class Router {
         lock.lock(); defer { lock.unlock() }
         let existed = book.owners[owner] != nil
         if book.remove(owner) { applyLocked() }
-        if existed { print("device \(owner): rilasciato") }
+        if existed { print("device \(owner): released") }
     }
 
     func outputIndex(_ id: String) -> Int? {
@@ -248,47 +248,47 @@ final class Router {
         do {
             switch m.address {
             case "/livebus/set":
-                // <owner> <canali bus> <destinazioni> [dB]
+                // <owner> <canali bus> <destinations> [dB]
                 guard m.args.count >= 2, let owner = m.args[0].stringValue, !owner.isEmpty else {
-                    throw LBError("uso: /livebus/set <owner> <bus> <destinazioni> [dB]")
+                    throw LBError("usage: /livebus/set <owner> <bus> <destinations> [dB]")
                 }
                 let src = m.args[1].stringValue ?? ""
                 let dest = m.args.count >= 3 ? (m.args[2].stringValue ?? "") : ""
                 let db = m.args.count >= 4 ? (m.args[3].doubleValue ?? 0) : 0
                 setOwner(owner, src: src, dest: dest, gainDb: db)
             case "/livebus/release":
-                guard let owner = m.args.first?.stringValue else { throw LBError("uso: /livebus/release <owner>") }
+                guard let owner = m.args.first?.stringValue else { throw LBError("usage: /livebus/release <owner>") }
                 releaseOwner(owner)
             case "/livebus/route", "/livebus/gain":
                 guard m.args.count >= 3, let s = m.args[0].intValue, let o = m.args[1].stringValue,
                       let oi = outputIndex(o), let d = m.args[2].intValue else {
-                    throw LBError("uso: \(m.address) <bus> <uscita> <canale> [dB]")
+                    throw LBError("usage: \(m.address) <bus> <output> <channel> [dB]")
                 }
                 let db = m.args.count >= 4 ? (m.args[3].doubleValue ?? 0) : 0
                 try setRoute(src: s, out: oi, dst: d, gain: dbToLin(db))
-                print("OSC rotta bus \(s) → \(outputs[oi].id):\(d) \(String(format: "%.1f", db)) dB")
+                print("OSC route bus \(s) → \(outputs[oi].id):\(d) \(String(format: "%.1f", db)) dB")
             case "/livebus/unroute":
                 guard m.args.count >= 3, let s = m.args[0].intValue, let o = m.args[1].stringValue,
                       let oi = outputIndex(o), let d = m.args[2].intValue else {
-                    throw LBError("uso: /livebus/unroute <bus> <uscita> <canale>")
+                    throw LBError("usage: /livebus/unroute <bus> <output> <channel>")
                 }
                 try setRoute(src: s, out: oi, dst: d, gain: 0)
-                print("OSC rimossa bus \(s) → \(outputs[oi].id):\(d)")
+                print("OSC removed bus \(s) → \(outputs[oi].id):\(d)")
             case "/livebus/clear":
                 replaceConfigRoutes([:])
-                print("OSC rotte di configurazione e manuali azzerate (i device R4F Out restano)")
+                print("OSC config and manual routes cleared (R4F Out devices stay)")
             case "/livebus/load":
-                guard let path = m.args.first?.stringValue else { throw LBError("uso: /livebus/load <file.json>") }
+                guard let path = m.args.first?.stringValue else { throw LBError("usage: /livebus/load <file.json>") }
                 let cfg = try LiveBusConfig.load(path)
                 replaceConfigRoutes(try expandConfig(cfg.routes ?? []))
-                print("OSC caricate le rotte da \(path)")
+                print("OSC loaded routes from \(path)")
             case "/livebus/routes":
-                print("rotte attive:\n" + routeList().joined(separator: "\n"))
+                print("active routes:\n" + routeList().joined(separator: "\n"))
             default:
-                throw LBError("indirizzo OSC sconosciuto \(m.address)")
+                throw LBError("unknown OSC address \(m.address)")
             }
         } catch {
-            print("OSC errore: \(error)")
+            print("OSC error: \(error)")
         }
     }
 
@@ -298,7 +298,7 @@ final class Router {
     func tick() {
         let t = now()
         lock.lock()
-        if book.expire(now: t, ttl: Router.ownerTTL) { applyLocked(); print("device scaduti rimossi") }
+        if book.expire(now: t, ttl: Router.ownerTTL) { applyLocked(); print("expired devices removed") }
         let owners = book.owners
         lock.unlock()
 
@@ -307,7 +307,7 @@ final class Router {
         for i in outputs.indices {
             lb_engine_get_output_stats(engine, UInt32(i), &lastStats[i])
             if lastStats[i].peak > 1.0 {
-                if !clipping(i) { print("CLIP su \(outputs[i].id): picco \(linToDbString(lastStats[i].peak)) dBFS — abbassa la traccia o usa @-6") }
+                if !clipping(i) { print("CLIP on \(outputs[i].id): peak \(linToDbString(lastStats[i].peak)) dBFS — lower the track or use @-6") }
                 lastClip[i] = t
             }
         }
@@ -339,9 +339,9 @@ final class Router {
     func outputLines() -> [String] {
         outputs.enumerated().map { i, o in
             let st = lastStats[i]
-            let state = st.running != 0 ? "ok" : "in avvio"
+            let state = st.running != 0 ? "ok" : "starting"
             let xr = st.underruns + st.overruns
-            return "\(o.id): \(o.device.name) — \(o.device.outputChannels) can, \(state)"
+            return "\(o.id): \(o.device.name) — \(o.device.outputChannels) ch, \(state)"
                 + (xr > 0 ? ", xrun \(st.underruns)/\(st.overruns)" : "")
                 + String(format: ", %.0f ms", o.latencyMs)
                 + (clipping(i) ? ", CLIP!" : "")
@@ -357,34 +357,34 @@ final class Router {
     var hasClip: Bool { outputs.indices.contains { clipping($0) } }
 
     func summary() -> String {
-        var s = "bus: \(bus.name) — \(bus.inputChannels) canali, \(Int(bus.sampleRate)) Hz, buffer \(bus.bufferFrames)\n"
+        var s = "bus: \(bus.name) — \(bus.inputChannels) channels, \(Int(bus.sampleRate)) Hz, buffer \(bus.bufferFrames)\n"
         // il driver LiveBus ha il volume disattivato nel percorso audio: il cursore non conta
         if !bus.uid.hasPrefix("LiveBus") && !bus.uid.hasPrefix("R4F"), let db = CoreAudioHelpers.outputVolumeDb(bus.id), db < -0.05 {
-            s += "  attenzione: il volume d'uscita del bus è \(String(format: "%.1f", db)) dB: la DAW arriva attenuata. "
-            s += "Portalo al massimo in Configurazione MIDI Audio.\n"
+            s += "  warning: the bus output volume is \(String(format: "%.1f", db)) dB: the DAW signal arrives attenuated. "
+            s += "Turn it all the way up in Audio MIDI Setup.\n"
         }
         for o in outputs {
-            s += "uscita \(o.id): \(o.device.name) — \(o.device.outputChannels) canali, \(Int(o.device.sampleRate)) Hz, "
-            s += "buffer \(o.device.bufferFrames), ring \(o.target) frame, latenza ≈ \(String(format: "%.1f", o.latencyMs)) ms\n"
+            s += "output \(o.id): \(o.device.name) — \(o.device.outputChannels) channels, \(Int(o.device.sampleRate)) Hz, "
+            s += "buffer \(o.device.bufferFrames), ring \(o.target) frame, latency ≈ \(String(format: "%.1f", o.latencyMs)) ms\n"
             if o.device.sampleRate != bus.sampleRate {
-                s += "  attenzione: frequenza diversa dal bus, il ricampionatore converte \(Int(bus.sampleRate))→\(Int(o.device.sampleRate))\n"
+                s += "  warning: sample rate differs from the bus, the resampler converts \(Int(bus.sampleRate))→\(Int(o.device.sampleRate))\n"
             }
         }
-        if let p = statusPath { s += "file di stato (device R4F Out in Live, altre app): \(p)\n" }
+        if let p = statusPath { s += "status file (R4F Out device in Live, other apps): \(p)\n" }
         let r = routeList()
-        s += r.isEmpty ? "nessuna rotta" : "rotte:\n" + r.joined(separator: "\n")
+        s += r.isEmpty ? "no routes" : "routes:\n" + r.joined(separator: "\n")
         return s
     }
 
     func statusReport() -> String {
         let active = busPeaks.enumerated().filter { $0.element > 0.001 }.map { "\($0.offset + 1):\(linToDbString($0.element))" }
-        var lines = ["bus      " + (active.isEmpty ? "silenzio" : active.prefix(16).joined(separator: " ")
+        var lines = ["bus      " + (active.isEmpty ? "silence" : active.prefix(16).joined(separator: " ")
             + (active.count > 16 ? " …(+\(active.count - 16))" : ""))]
         for (i, o) in outputs.enumerated() {
             let st = lastStats[i]
             let state = st.running != 0 ? "ok " : "..."
             lines.append(o.id.padding(toLength: 8, withPad: " ", startingAt: 0)
-                + String(format: " %@ ring %5llu err %+7.1f  deriva %+8.2f ppm (ff %+7.2f, pi %+7.2f)  xrun %llu/%llu  can %u  picco %@",
+                + String(format: " %@ ring %5llu err %+7.1f  drift %+8.2f ppm (ff %+7.2f, pi %+7.2f)  xrun %llu/%llu  ch %u  peak %@",
                          state, st.fill, st.error, st.ppm_ff + st.ppm_pi, st.ppm_ff, st.ppm_pi,
                          st.underruns, st.overruns, st.active_channels, linToDbString(st.peak))
                 + (clipping(i) ? "  CLIP" : ""))
@@ -392,7 +392,7 @@ final class Router {
         lock.lock()
         let devs = book.owners.filter { $0.value.expires }.count
         lock.unlock()
-        if devs > 0 { lines.append("device R4F Out collegati: \(devs)") }
+        if devs > 0 { lines.append("R4F Out devices connected: \(devs)") }
         return lines.joined(separator: "\n")
     }
 }

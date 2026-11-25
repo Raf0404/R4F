@@ -13,13 +13,13 @@ enum DefaultConfig {
             ?? inputs.filter { $0.name.localizedCaseInsensitiveContains("BlackHole") }.max { $0.inputChannels < $1.inputChannels }
             ?? inputs.first { $0.isVirtual }
         guard let busDev = bus else {
-            throw LBError("nessun bus virtuale trovato: installa il driver (sudo driver/install.sh 256)")
+            throw LBError("no virtual bus found: install the driver (sudo driver/install.sh 256)")
         }
         let chosen = devices.filter { $0.outputChannels > 0 && !$0.isVirtual && !$0.isAggregate && $0.id != busDev.id }
         let names = outputNames(chosen.map { outputBase($0, ref: $0.name) })
         let outputs = zip(chosen, names).map { OutputSpec(id: $1, device: label($0, devices), delayMs: nil) }
         if outputs.isEmpty {
-            throw LBError("nessuna scheda di uscita fisica trovata")
+            throw LBError("no physical output interface found")
         }
         var routes: [RouteSpec] = []
         if let mac = outputs.first(where: { $0.id == "mac" }),

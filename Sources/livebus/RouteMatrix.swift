@@ -138,7 +138,7 @@ extension ConfigEditorModel {
             if line.isEmpty || line.hasPrefix("#") { continue }
             let ns = line as NSString
             guard let m = re.firstMatch(in: line, range: NSRange(location: 0, length: ns.length)) else {
-                errors.append("riga \(n + 1): scrivi  Nome: canali bus -> uscita:canali  (es. Fronte: 3-4 -> a:1-2)")
+                errors.append("line \(n + 1): write  Name: bus channels -> output:channels  (e.g. Front: 3-4 -> a:1-2)")
                 continue
             }
             let name = m.range(at: 1).location == NSNotFound ? "" : ns.substring(with: m.range(at: 1))
@@ -150,14 +150,14 @@ extension ConfigEditorModel {
                 lineGain = Double(tokens[gi].dropFirst().replacingOccurrences(of: ",", with: ".")
                     .replacingOccurrences(of: "dB", with: "", options: .caseInsensitive)) ?? .nan
                 tokens.remove(at: gi)
-                if lineGain.isNaN { errors.append("riga \(n + 1): guadagno non valido"); continue }
+                if lineGain.isNaN { errors.append("line \(n + 1): invalid gain"); continue }
             }
-            if tokens.isEmpty { errors.append("riga \(n + 1): manca la destinazione"); continue }
+            if tokens.isEmpty { errors.append("line \(n + 1): missing destination"); continue }
             for tok in tokens {
                 var body = tok, g = lineGain
                 if let at = body.firstIndex(of: "@") {
                     guard let v = Double(body[body.index(after: at)...].replacingOccurrences(of: ",", with: ".")) else {
-                        errors.append("riga \(n + 1): guadagno non valido in '\(tok)'"); continue
+                        errors.append("line \(n + 1): invalid gain in '\(tok)'"); continue
                     }
                     g += v
                     body = String(body[..<at])
@@ -166,7 +166,7 @@ extension ConfigEditorModel {
                 let r = Route(name: name, from: from, out: parts.first ?? "", channels: parts.count > 1 ? parts[1] : "",
                               gainDb: g == 0 ? "" : fmt(g), sum: isSum)
                 let st = status(of: r)
-                if !st.ok { errors.append("riga \(n + 1): \(st.text)") }
+                if !st.ok { errors.append("line \(n + 1): \(st.text)") }
                 rows.append(r)
             }
         }
@@ -191,7 +191,7 @@ extension ConfigEditorModel {
         return [
             Preset(id: "stereo", title: "Stereo (2)", orders: [("", ["L", "R"])]),
             Preset(id: "lcr", title: "LCR (3)", orders: [("SMPTE/ITU", ["L", "R", "C"]), ("Film", ["L", "C", "R"])]),
-            Preset(id: "quad", title: "Quadrifonia (4)", orders: [("", ["L", "R", "Ls", "Rs"])]),
+            Preset(id: "quad", title: "Quad (4)", orders: [("", ["L", "R", "Ls", "Rs"])]),
             Preset(id: "5.0", title: "5.0 (5)", orders: [("SMPTE/ITU", ["L", "R", "C", "Ls", "Rs"]),
                                                        ("Film", ["L", "C", "R", "Ls", "Rs"])]),
             Preset(id: "5.1", title: "5.1 (6)", orders: [("SMPTE/ITU", ["L", "R", "C", "LFE", "Ls", "Rs"]),
@@ -201,10 +201,10 @@ extension ConfigEditorModel {
             Preset(id: "7.1.4", title: "7.1.4 (12)", orders: [
                 ("SMPTE/ITU", ["L", "R", "C", "LFE", "Ls", "Rs", "Lrs", "Rrs", "Ltf", "Rtf", "Ltr", "Rtr"]),
                 ("Film", ["L", "C", "R", "Ls", "Rs", "Lrs", "Rrs", "LFE", "Ltf", "Rtf", "Ltr", "Rtr"])]),
-            Preset(id: "ring8", title: "Anello di 8 (ottofonia)", orders: [("", nums(8))]),
-            Preset(id: "amb1", title: "Ambisonics 1° ordine (4)", orders: [("", acn(4))]),
-            Preset(id: "amb2", title: "Ambisonics 2° ordine (9)", orders: [("", acn(9))]),
-            Preset(id: "amb3", title: "Ambisonics 3° ordine (16)", orders: [("", acn(16))]),
+            Preset(id: "ring8", title: "Ring of 8 (octophony)", orders: [("", nums(8))]),
+            Preset(id: "amb1", title: "Ambisonics 1st order (4)", orders: [("", acn(4))]),
+            Preset(id: "amb2", title: "Ambisonics 2nd order (9)", orders: [("", acn(9))]),
+            Preset(id: "amb3", title: "Ambisonics 3rd order (16)", orders: [("", acn(16))]),
         ]
     }()
 
@@ -236,16 +236,16 @@ extension ConfigEditorModel {
     /// nil = tutto a posto; blocking = il preset non si può applicare.
     func presetProblem(_ p: Preset, busStart: Int, out: String, outStart: Int) -> (text: String, blocking: Bool)? {
         let n = p.count
-        if busStart < 1 { return ("il canale del bus parte da 1", true) }
-        if let b = busChannels, busStart + n - 1 > b { return ("il bus ha \(b) canali: servono \(busStart)-\(busStart + n - 1)", true) }
-        if out.isEmpty { return ("scegli un'uscita", true) }
-        if outStart < 1 { return ("il canale dell'uscita parte da 1", true) }
+        if busStart < 1 { return ("bus channels start at 1", true) }
+        if let b = busChannels, busStart + n - 1 > b { return ("the bus has \(b) channels: \(busStart)-\(busStart + n - 1) needed", true) }
+        if out.isEmpty { return ("choose an output", true) }
+        if outStart < 1 { return ("output channels start at 1", true) }
         if let oc = channels(ofOutput: out), outStart + n - 1 > oc {
-            return ("\(out) ha \(oc) canali: servono \(outStart)-\(outStart + n - 1)", true)
+            return ("\(out) has \(oc) channels: \(outStart)-\(outStart + n - 1) needed", true)
         }
         let busy = Set(connectionMap().keys.map { $0.src })
         if (busStart..<(busStart + n)).contains(where: { busy.contains($0) }) {
-            return ("alcuni canali del bus \(busStart)-\(busStart + n - 1) sono già usati: le rotte si aggiungono", false)
+            return ("some of bus channels \(busStart)-\(busStart + n - 1) are already in use: the routes are added", false)
         }
         return nil
     }

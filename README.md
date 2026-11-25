@@ -49,13 +49,13 @@
 
 1. **Chiudi la DAW** e gli altri programmi audio. Alla fine dell'installazione CoreAudio si riavvia e
    l'audio si ferma per qualche secondo.
-2. Scarica **`R4F-1.1.1.pkg`** dalla pagina [Releases](https://github.com/Raf0404/R4F/releases/latest).
+2. Scarica **`R4F-1.2.0.pkg`** dalla pagina [Releases](https://github.com/Raf0404/R4F/releases/latest).
 3. Apri il file con un doppio clic e segui l'Installazione di macOS: benvenuto, licenza, installa.
    Ti verrà chiesta la password di amministratore.
 
 > **"Impossibile aprire… sviluppatore non identificato"?** Il pacchetto non è firmato con un certificato
 > Apple. Apri **Impostazioni di Sistema → Privacy e sicurezza**, scorri in fondo e premi **Apri comunque**
-> accanto a "R4F-1.1.1.pkg". In alternativa: clic destro sul file → **Apri** → **Apri**.
+> accanto a "R4F-1.2.0.pkg". In alternativa: clic destro sul file → **Apri** → **Apri**.
 
 L'installer copia:
 
@@ -81,11 +81,11 @@ Dal menu:
 | voce | cosa fa |
 |---|---|
 | stato | R4F BUS in esecuzione, uscite, latenza, eventuali xrun o CLIP, matrice di R4F BOX |
-| **Configura R4F BUS…** (⌘,) | apre l'editor |
-| **Configura R4F BOX…** | apre la matrice della BOX |
-| **Dispositivi audio** | elenco delle schede; un clic copia il nome |
-| **Avvia all'accesso** | R4F parte all'avvio del Mac |
-| **Mostra il log** | per capire cosa succede se qualcosa non va |
+| **Configure R4F BUS…** (⌘,) | apre l'editor |
+| **Configure R4F BOX…** | apre la matrice della BOX |
+| **Audio Devices** | elenco delle schede; un clic copia il nome |
+| **Launch at Login** | R4F parte all'avvio del Mac |
+| **Show Log** | per capire cosa succede se qualcosa non va |
 
 > L'icona diventa un **triangolo** in caso di errore, per esempio una scheda non collegata, e un **punto
 > esclamativo** in caso di clip, xrun o anello. Aprendo il menu trovi la spiegazione.
@@ -111,50 +111,50 @@ Dal menu:
 
 ## 4. Configurare R4F BUS
 
-Apri **Configura R4F BUS…**:
+Apri **Configure R4F BUS…**:
 
 <p align="center"><img src="docs/screenshots/bus-elenco.png" alt="Editor di R4F BUS" width="860"></p>
 
-**Uscite.** Aggiungi le schede su cui suonare con **+ Aggiungi uscita** e scegli il dispositivo dal menu.
+**Outputs (uscite).** Aggiungi le schede su cui suonare con **+ Add Output** e scegli il dispositivo dal menu.
 Il nome breve si dà da solo: `mac` per l'uscita del Mac, la prima parola della scheda (`fireface`,
-`blackhole`…) per le altre. Con **Ritardo ms** puoi compensare a mano una scheda.
+`blackhole`…) per le altre. Con **Delay ms** puoi compensare a mano una scheda.
 
-**Rotte.** Ogni riga dice quali canali del bus vanno dove:
+**Routes (rotte).** Ogni riga dice quali canali del bus vanno dove:
 
 | campo | esempio | significato |
 |---|---|---|
-| Nome | `Voce` | libero, solo per orientarsi (colore uguale nella matrice) |
-| Canali del bus | `3-4` | i canali su cui la DAW manda la traccia |
-| Uscita / Canali uscita | `blackhole` · `7-8` | dove arrivano |
-| Modo | **Somma** / **1:1** | vedi sotto |
-| Guadagno dB | `-3` | facoltativo |
+| Name | `Vocals` | libero, solo per orientarsi (colore uguale nella matrice) |
+| Bus channels | `3-4` | i canali su cui la DAW manda la traccia |
+| Output / Output channels | `blackhole` · `7-8` | dove arrivano |
+| Mode | **Sum** / **1:1** | vedi sotto |
+| Gain dB | `-3` | facoltativo |
 
-- **Somma** è il default: ogni canale va su **tutte** le uscite della rotta, ciascuno a 1/N (2 canali
+- **Sum** (somma) è il default: ogni canale va su **tutte** le uscite della rotta, ciascuno a 1/N (2 canali
   −6 dB, 4 canali −12 dB). Due canali identici a 0 dBFS danno 0 dBFS in uscita: **il livello non sale mai**.
 - **1:1** va in coppia: 1→1, 2→2, come per lo stereo o per i formati surround.
 
-La colonna **Esito** controlla ogni riga mentre scrivi: "4 collegamenti, somma (−6 dB)" oppure l'errore in
-rosso. In fondo all'editor c'è l'elenco dei problemi. Premi **Salva e applica** (⌘S): R4F si riavvia con la
+La colonna **Result** controlla ogni riga mentre scrivi: "4 connections, sum (−6 dB)" oppure l'errore in
+rosso. In fondo all'editor c'è l'elenco dei problemi. Premi **Save and Apply** (⌘S): R4F si riavvia con la
 nuova configurazione in un attimo.
 
-> Le opzioni **Avanzate** sono buffer (meno campioni = meno latenza), allineamento della latenza tra schede
+> Le opzioni **Advanced** sono buffer (meno campioni = meno latenza), allineamento della latenza tra schede
 > diverse e porta OSC.
 
 ## 5. Matrice, testo e preset
 
-Le rotte si possono scrivere in tre modi, sempre sincronizzati: passa da uno all'altro quando vuoi.
+Le rotte si possono scrivere in tre modi (**List**, **Matrix**, **Text**), sempre sincronizzati: passa da uno all'altro quando vuoi.
 
-**Matrice.** Righe = canali del bus, colonne = canali delle uscite. Clic su una casella per collegare o
-scollegare, trascina per farne tante (in diagonale = uno a uno). In "Nuovi collegamenti in" scegli a quale
+**Matrix.** Righe = canali del bus, colonne = canali delle uscite. Clic su una casella per collegare o
+scollegare, trascina per farne tante (in diagonale = uno a uno). In "New connections in" scegli a quale
 rotta vanno. Le caselle più chiare hanno un guadagno diverso da 0 dB.
 
 <p align="center"><img src="docs/screenshots/bus-matrice.png" alt="Matrice" width="860"></p>
 
-**Testo.** Una rotta per riga, comodo per configurazioni grandi:
+**Text.** Una rotta per riga, comodo per configurazioni grandi:
 
 ```
 Main: 1-2 => mac:1-2            # 1:1, in coppia
-Voce: 9-10 -> blackhole:7-8     # somma
+Vocals: 9-10 -> blackhole:7-8   # somma
 Sub: 11 -> fireface:7-8 @-3     # guadagno
 5.1: 3-8 => fireface:1,3,2,5-6,4
 ```
@@ -180,12 +180,12 @@ Il preset propone da solo un blocco libero del bus e un'uscita con abbastanza ca
 2. Nel programma che lo **riceve** scegli **R4F BOX** come ingresso.
 3. Di default è **1:1**: l'uscita 1 arriva sull'ingresso 1, la 2 sulla 2, e così via.
 
-Per cambiare qualcosa apri **Configura R4F BOX…**. L'editor è lo stesso, con la destinazione `in:` cioè
+Per cambiare qualcosa apri **Configure R4F BOX…**. L'editor è lo stesso, con la destinazione `in:` cioè
 gli ingressi della BOX:
 
 - `1-2 => in:5-6`: la coppia 1-2 arriva sugli ingressi 5-6;
 - `1-4 -> in:1-2`: quattro canali sommati su due, senza alzare il livello;
-- **Tutto 1:1**: torna alla copia completa.
+- **All 1:1**: torna alla copia completa.
 
 <p align="center"><img src="docs/screenshots/box-matrice.png" alt="Matrice di R4F BOX" width="860"></p>
 
@@ -212,16 +212,16 @@ restano quelli di Live.
 | **Non si sente niente** | la DAW deve usare **R4F BUS** come uscita; in R4F deve esserci una rotta per quei canali (il Main è 1-2); controlla di aver consentito il **microfono** a R4F in *Impostazioni di Sistema → Privacy e sicurezza → Microfono* |
 | L'icona è un **triangolo** | apri il menu: di solito una scheda della configurazione non è collegata. R4F riprova ogni 5 secondi e riparte da sola quando la colleghi |
 | **CLIP** su un'uscita | l'uscita supera 0 dBFS: abbassa la traccia o usa un guadagno, per esempio `@-6` |
-| **Anello di retroazione** | un'uscita della configurazione è lo stesso dispositivo del bus: R4F la scarta. Scegli un'altra scheda per quell'uscita |
+| **Feedback loop** (anello di retroazione) | un'uscita della configurazione è lo stesso dispositivo del bus: R4F la scarta. Scegli un'altra scheda per quell'uscita |
 | La DAW ha cambiato frequenza (44,1 ↔ 48 kHz) | niente da fare: R4F se ne accorge e si riavvia da solo |
-| "R4F BOX non installato" | reinstalla il pacchetto |
-| Il device R4F Out dice "R4F non risponde" | apri R4F dalle Applicazioni, oppure attiva **Avvia all'accesso** |
+| "R4F BOX not installed" | reinstalla il pacchetto |
+| Il device R4F Out dice "R4F not responding" | apri R4F dalle Applicazioni, oppure attiva **Launch at Login** |
 
-Il log completo è in `~/Library/Logs/R4F.log` (menu → **Mostra il log**).
+Il log completo è in `~/Library/Logs/R4F.log` (menu → **Show Log**).
 
 ## 9. Disinstallare
 
-Chiudi R4F (menu → **Esci da R4F**) e la DAW, poi nel Terminale:
+Chiudi R4F (menu → **Quit R4F**) e la DAW, poi nel Terminale:
 
 ```bash
 sudo rm -rf /Library/Audio/Plug-Ins/HAL/R4FBUS.driver /Library/Audio/Plug-Ins/HAL/R4FBOX.driver /Applications/R4F.app "/Library/Application Support/R4F"

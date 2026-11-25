@@ -17,7 +17,7 @@ enum RouteSpecParser {
             if let at = body.firstIndex(of: "@") {
                 let g = String(body[body.index(after: at)...])
                 guard let v = Double(g.replacingOccurrences(of: "dB", with: "", options: .caseInsensitive)) else {
-                    throw LBError("guadagno non valido in '\(tok)'")
+                    throw LBError("invalid gain in '\(tok)'")
                 }
                 gain = v
                 body = String(body[..<at])
@@ -27,18 +27,18 @@ enum RouteSpecParser {
                 let bare = body.split(separator: "(").first.map(String.init) ?? body
                 if let o = outputs.first(where: { $0.id == bare }) {
                     let ex = o.channels >= 2 ? "\(o.id):1-2" : "\(o.id):1"
-                    throw LBError("manca il canale dopo '\(o.id)': scrivi ad es. \(ex) (\(o.id) ha \(o.channels) canali)")
+                    throw LBError("missing channel after '\(o.id)': write e.g. \(ex) (\(o.id) has \(o.channels) channels)")
                 }
                 let ids = outputs.map { "\($0.id):1-\($0.channels)" }.joined(separator: ", ")
-                throw LBError("'\(tok)' non è una destinazione: usa uscita:canali (\(ids))")
+                throw LBError("'\(tok)' is not a destination: use output:channels (\(ids))")
             }
             let (id, chans) = try RouteSpec.parseTarget(body)
             guard let oi = outputs.firstIndex(where: { $0.id == id }) else {
                 let ids = outputs.map { $0.id }.joined(separator: ", ")
-                throw LBError("uscita '\(id)' sconosciuta (disponibili: \(ids))")
+                throw LBError("unknown output '\(id)' (available: \(ids))")
             }
             if let bad = chans.first(where: { $0 > outputs[oi].channels }) {
-                throw LBError("\(id) ha \(outputs[oi].channels) canali, non \(bad)")
+                throw LBError("\(id) has \(outputs[oi].channels) channels, not \(bad)")
             }
             result.append((oi, chans, gain))
         }
@@ -51,7 +51,7 @@ enum RouteSpecParser {
     static func expand(src: [Int], dest: String, busChannels: Int, outputs: [OutputInfo], gainDb: Double = 0,
                        sum: Bool = false) throws -> [RouteKey: Float] {
         if let bad = src.first(where: { $0 < 1 || $0 > busChannels }) {
-            throw LBError("il bus ha \(busChannels) canali, non \(bad)")
+            throw LBError("the bus has \(busChannels) channels, not \(bad)")
         }
         var r: [RouteKey: Float] = [:]
         for (oi, chans, g) in try parseDest(dest, outputs: outputs) {

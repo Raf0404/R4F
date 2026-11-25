@@ -33,12 +33,12 @@ func runLogicTests() -> Bool {
     // guadagno globale che si somma
     verdict(ex([3], "b:1@-3", -3)?[RouteKey(src: 2, out: 1, dst: 0)] == dbToLin(-6), "guadagno di token e globale si sommano")
     verdict(ex([3], "")?.isEmpty == true, "destinazione vuota → nessuna rotta")
-    verdict(err([3], "c:1").contains("sconosciuta"), "uscita sconosciuta → errore leggibile")
-    verdict(err([3, 4], "b(8)").contains("scrivi ad es. b:1-2"), "'b(8)' copiato dallo stato → suggerisce b:1-2")
-    verdict(err([3, 4], "b").contains("scrivi ad es. b:1-2"), "'b' senza canale → suggerisce b:1-2")
+    verdict(err([3], "c:1").contains("unknown"), "uscita sconosciuta → errore leggibile")
+    verdict(err([3, 4], "b(8)").contains("write e.g. b:1-2"), "'b(8)' copiato dallo stato → suggerisce b:1-2")
+    verdict(err([3, 4], "b").contains("write e.g. b:1-2"), "'b' senza canale → suggerisce b:1-2")
     verdict(err([3], "zz").contains("a:1-64, b:1-8"), "token senza ':' sconosciuto → elenca le uscite")
-    verdict(err([3], "b:9").contains("8 canali"), "canale oltre il limite → errore")
-    verdict(err([1, 2, 3], "a:1-2").contains("stessa lunghezza"), "3 → 2 canali → errore")
+    verdict(err([3], "b:9").contains("8 channels"), "canale oltre il limite → errore")
+    verdict(err([1, 2, 3], "a:1-2").contains("same length"), "3 → 2 canali → errore")
     verdict(err([300], "a:1").contains("256"), "canale bus oltre il limite → errore")
 
     // configurazione di default
@@ -95,7 +95,7 @@ func runLogicTests() -> Bool {
     ed.routes[1].gainDb = ""
     ed.outputs.append(ConfigEditorModel.Out(name: "", device: "uid-che-non-c-e", delayMs: ""))
     ed.syncNames()
-    verdict(ed.canSave && ed.issues.contains { !$0.blocking && $0.text.contains("non è collegato") },
+    verdict(ed.canSave && ed.issues.contains { !$0.blocking && $0.text.contains("not connected") },
             "editor: scheda scollegata = avviso, non blocca")
     ed.addRoute()
     verdict(ed.routes.last?.from == "5-6", "editor: nuova rotta propone il primo canale libero del bus (5-6)")
@@ -204,7 +204,7 @@ func runLogicTests() -> Bool {
         bufferFrames: nil, safetyFrames: nil, feedForward: nil, alignOutputs: nil, oscPort: 7400, statusFile: nil), path: nil)
     verdict(sm.routes[0].sum == false, "config salvata prima (senza modo) resta 1:1: il suono non cambia da solo")
     sm.addRoute()
-    verdict(sm.routes[1].sum == true && sm.status(of: sm.routes[1]).text.contains("somma"), "rotta nuova: Somma di default (\(sm.status(of: sm.routes[1]).text))")
+    verdict(sm.routes[1].sum == true && sm.status(of: sm.routes[1]).text.contains("sum"), "rotta nuova: Somma di default (\(sm.status(of: sm.routes[1]).text))")
     verdict(sm.makeConfig().routes?.map { $0.mode ?? "-" } == ["pair", "sum"], "il modo viene scritto nel file")
     verdict(sm.routesText().contains("=> mac:1-2") && sm.routesText().contains("-> mac:1-2"), "testo: => per 1:1, -> per somma")
     let tx = sm.routesText()
@@ -250,7 +250,7 @@ func runLogicTests() -> Bool {
         outputs: [OutputSpec(id: "mac", device: "Altoparlanti MacBook Pro", delayMs: nil), OutputSpec(id: "blackhole", device: "R4F BUS", delayMs: nil)],
         routes: [RouteSpec(from: ChannelList([1]), to: "blackhole:1", gainDb: nil), RouteSpec(from: ChannelList([1]), to: "mac:2", gainDb: nil)],
         bufferFrames: nil, safetyFrames: nil, feedForward: nil, alignOutputs: nil, oscPort: 7400, statusFile: nil), path: nil)
-    verdict(!lp.canSave && lp.issues.contains { $0.blocking && $0.text.contains("Anello") }, "editor: la config dell'utente con l'anello non si salva")
+    verdict(!lp.canSave && lp.issues.contains { $0.blocking && $0.text.contains("Feedback loop") }, "editor: la config dell'utente con l'anello non si salva")
     lp.outputs.removeLast()
     lp.addOutput()
     verdict(lp.outputs.last?.device != "R4F BUS_UID", "editor: Aggiungi uscita non propone il dispositivo del bus")

@@ -22,7 +22,7 @@ func check(_ st: OSStatus, _ what: String) throws {
 struct AudioDevice {
     let id: AudioObjectID
     let uid: String
-    let name: String
+    var name: String
     let inputChannels: Int
     let outputChannels: Int
     let sampleRate: Double
@@ -104,17 +104,17 @@ enum CoreAudioHelpers {
     /// Cerca per UID esatto, poi nome esatto, poi sottostringa (senza maiuscole). Deve essere univoco.
     static func find(_ query: String, in devices: [AudioDevice], direction: Direction) throws -> AudioDevice {
         let usable = devices.filter { direction == .input ? $0.inputChannels > 0 : $0.outputChannels > 0 }
-        let what = direction == .input ? "ingresso" : "uscita"
+        let what = direction == .input ? "input" : "output"
         if let d = usable.first(where: { $0.uid == query }) { return d }
         let exact = usable.filter { $0.name == query }
         if exact.count == 1 { return exact[0] }
-        if exact.count > 1 { throw LBError("più dispositivi di \(what) si chiamano '\(query)': usa l'UID (livebus devices)") }
+        if exact.count > 1 { throw LBError("several \(what) devices are called '\(query)': use the UID (livebus devices)") }
         let partial = usable.filter { $0.name.localizedCaseInsensitiveContains(query) }
         if partial.count == 1 { return partial[0] }
         if partial.count > 1 {
-            throw LBError("'\(query)' è ambiguo: \(partial.map { $0.name }.joined(separator: ", "))")
+            throw LBError("'\(query)' is ambiguous: \(partial.map { $0.name }.joined(separator: ", "))")
         }
-        throw LBError("nessun dispositivo di \(what) corrisponde a '\(query)' (livebus devices per l'elenco)")
+        throw LBError("no \(what) device matches '\(query)' (livebus devices for the list)")
     }
 
     /// Volume d'uscita principale in dB se il dispositivo lo espone.
@@ -136,7 +136,7 @@ enum CoreAudioHelpers {
 
 func listDevices() {
     let devices = CoreAudioHelpers.allDevices()
-    print("ID    in  out   Hz      buf  nome  [uid]")
+    print("ID    in  out   Hz      buf  name  [uid]")
     for d in devices {
         print(String(format: "%-5u %3d %4d  %6.0f  %4d  ", d.id, d.inputChannels, d.outputChannels, d.sampleRate, d.bufferFrames)
               + "\(d.name)  [\(d.uid)]")

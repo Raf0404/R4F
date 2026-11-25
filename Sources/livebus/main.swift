@@ -18,23 +18,23 @@ private func onTerminate(_ body: @escaping () -> Void) {
 
 private func usage() -> Never {
     print("""
-    livebus — uscite multicanale per qualsiasi DAW (Live, Logic, Reaper, Cubase, Pro Tools, Bitwig…) via bus virtuale
+    livebus — multichannel outputs for any DAW (Live, Logic, Reaper, Cubase, Pro Tools, Bitwig…) through a virtual bus
 
-    uso:
-      livebus app                          icona nella barra dei menu (come LiveBus.app)
-      livebus devices                      elenca i dispositivi audio
-      livebus default-config               mostra la configurazione che l'app crea al primo avvio
-      livebus run <config.json> [--status s]   avvia il router (Ctrl-C per fermare)
-      livebus tone <dispositivo> [--channels 1-2] [--freq 440] [--level -18] [--cycle 0]
-                                           tono di prova su un dispositivo (simula la DAW sul bus);
-                                           --cycle N sposta il tono di canale ogni N secondi
-      livebus selftest [--seconds 300]     simulazione di deriva e qualità, senza hardware
+    usage:
+      livebus app                          menu bar icon (like R4F.app)
+      livebus devices                      lists the audio devices
+      livebus default-config               shows the configuration the app creates on first launch
+      livebus run <config.json> [--status s]   starts the router (Ctrl-C to stop)
+      livebus tone <device> [--channels 1-2] [--freq 440] [--level -18] [--cycle 0]
+                                           test tone on a device (simulates the DAW on the bus);
+                                           --cycle N moves the tone to the next channel every N seconds
+      livebus selftest [--seconds 300]     drift and quality simulation, no hardware needed
       livebus bench [--bus 256] [--outputs 4] [--channels 64] [--block 256]
-                                           carico CPU del motore a pieno regime
+                                           engine CPU load at full scale
 
-    OSC (127.0.0.1, porta oscPort, default 7400; canali 1-based):
-      /livebus/route <bus> <uscita> <canale> [dB]
-      /livebus/unroute <bus> <uscita> <canale>
+    OSC (127.0.0.1, port oscPort, default 7400; channels are 1-based):
+      /livebus/route <bus> <output> <channel> [dB]
+      /livebus/unroute <bus> <output> <channel>
       /livebus/clear      /livebus/load <file.json>      /livebus/routes
     """)
     exit(2)
@@ -57,13 +57,13 @@ private func runRouter(_ args: [String]) {
         var osc: OSCServer?
         if port > 0 { osc = try OSCServer(port: UInt16(port)) { router.handle($0) } }
         try router.start()
-        print("avviato. Ctrl-C per fermare.")
+        print("started. Ctrl-C to stop.")
         if let osc = osc {
             osc.start()
             keepAlive.append(osc)
-            print("OSC in ascolto su 127.0.0.1:\(port)")
+            print("OSC listening on 127.0.0.1:\(port)")
         }
-        onTerminate { router.stop(); print("\nfermato.") }
+        onTerminate { router.stop(); print("\nstopped.") }
 
         // ogni secondo: scadenza device, statistiche, file di stato; stampa ogni `interval` secondi
         let every = max(1, Int(interval.rounded()))
@@ -80,7 +80,7 @@ private func runRouter(_ args: [String]) {
         keepAlive.append(router)
         dispatchMain()
     } catch {
-        fputs("errore: \(error)\n", stderr)
+        fputs("error: \(error)\n", stderr)
         exit(1)
     }
 }
@@ -91,20 +91,20 @@ private func runTone(_ args: [String]) {
         let dev = try CoreAudioHelpers.find(query, in: CoreAudioHelpers.allDevices(), direction: .output)
         let list = try ChannelList.parse(option(args, "--channels") ?? "1-2")
         guard list.allSatisfy({ $0 <= dev.outputChannels }) else {
-            throw LBError("\(dev.name) ha \(dev.outputChannels) canali di uscita")
+            throw LBError("\(dev.name) has \(dev.outputChannels) output channels")
         }
         let freq = Double(option(args, "--freq") ?? "440") ?? 440
         let level = Double(option(args, "--level") ?? "-18") ?? -18
         let cycle = Double(option(args, "--cycle") ?? "0") ?? 0
         let chans = list.map { UInt32($0 - 1) }
         guard let tone = lb_tone_create(dev.sampleRate, freq, dbToLin(level), chans, UInt32(chans.count), cycle) else {
-            throw LBError("impossibile creare il tono")
+            throw LBError("could not create the tone")
         }
         var pid: AudioDeviceIOProcID?
-        try check(lb_create_tone_proc(tone, dev.id, &pid), "IOProc tono")
-        try check(AudioDeviceStart(dev.id, pid), "avvio tono")
-        print("tono \(Int(freq)) Hz a \(Int(level)) dB su \(dev.name), canali \(list.map(String.init).joined(separator: ","))"
-              + (cycle > 0 ? ", un canale ogni \(cycle) s" : "") + ". Ctrl-C per fermare.")
+        try check(lb_create_tone_proc(tone, dev.id, &pid), "tone IOProc")
+        try check(AudioDeviceStart(dev.id, pid), "starting tone")
+        print("tone \(Int(freq)) Hz at \(Int(level)) dB on \(dev.name), channels \(list.map(String.init).joined(separator: ","))"
+              + (cycle > 0 ? ", one channel every \(cycle) s" : "") + ". Ctrl-C to stop.")
         onTerminate {
             AudioDeviceStop(dev.id, pid)
             AudioDeviceDestroyIOProcID(dev.id, pid!)
@@ -116,14 +116,14 @@ private func runTone(_ args: [String]) {
             timer.schedule(deadline: .now(), repeating: 0.05)
             timer.setEventHandler {
                 let c = lb_tone_current(tone)
-                if c != last { last = c; print("→ canale \(list[Int(c)])") }
+                if c != last { last = c; print("→ channel \(list[Int(c)])") }
             }
             timer.resume()
             keepAlive.append(timer as AnyObject)
         }
         dispatchMain()
     } catch {
-        fputs("errore: \(error)\n", stderr)
+        fputs("error: \(error)\n", stderr)
         exit(1)
     }
 }
@@ -145,7 +145,7 @@ case "default-config":
         let enc = JSONEncoder()
         enc.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
         print(String(decoding: try enc.encode(cfg), as: UTF8.self))
-    } catch { fputs("errore: \(error)\n", stderr); exit(1) }
+    } catch { fputs("error: \(error)\n", stderr); exit(1) }
 case "run": runRouter(Array(argv.dropFirst()))
 case "tone": runTone(Array(argv.dropFirst()))
 case "bench":

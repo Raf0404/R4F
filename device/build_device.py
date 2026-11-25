@@ -75,8 +75,8 @@ mode = box("live.tab", (300, 60, 100, 20), (6, 25, 96, 18),
            varname="mode", numinlets=1, numoutlets=3, outlettype=["", "", "float"],
            parameter_enable=1, num_lines_patching=1, num_lines_presentation=1, fontsize=9.0,
            saved_attribute_attributes={"valueof": {
-               "parameter_enum": ["Stereo", "Mono"], "parameter_longname": "Modo",
-               "parameter_shortname": "Modo", "parameter_type": 2, "parameter_mmax": 1,
+               "parameter_enum": ["Stereo", "Mono"], "parameter_longname": "Mode",
+               "parameter_shortname": "Mode", "parameter_type": 2, "parameter_mmax": 1,
                "parameter_initial": [0.0], "parameter_initial_enable": 1,
                "parameter_linknames": 1, "parameter_modmode": 0, "parameter_unitstyle": 9}})
 pmode = obj("prepend mode", (300, 90, 80, 22), 1, 1)
@@ -84,13 +84,13 @@ wire(mode, 0, pmode, 0)
 wire(pmode, 0, js, 0)
 
 btn = box("live.text", (420, 60, 80, 20), (108, 25, 70, 18),
-          text="Riassegna", mode=0, numinlets=1, numoutlets=2, outlettype=["", ""],
+          text="Reassign", mode=0, numinlets=1, numoutlets=2, outlettype=["", ""],
           parameter_enable=0, fontsize=9.0)
 reassign = box("message", (420, 90, 60, 22), text="reassign", numinlets=2, numoutlets=1, outlettype=[""])
 wire(btn, 0, reassign, 0)
 wire(reassign, 0, js, 0)
 
-comment("destinazioni  (es.  a:1-2  b:5@-6)", (300, 130, 200, 20), (6, 47, 300, 18), fontsize=9.0)
+comment("destinations  (e.g.  a:1-2  b:5@-6)", (300, 130, 200, 20), (6, 47, 300, 18), fontsize=9.0)
 te = box("textedit", (300, 150, 220, 22), (6, 64, W - 12, 22),
          varname="dest", numinlets=1, numoutlets=3, outlettype=["", "int", ""],
          outputmode=1, keymode=1, lines=1, fontsize=11.0)
@@ -99,11 +99,11 @@ wire(te, 0, ptext, 0)
 wire(ptext, 0, js, 0)
 wire(js, 1, te, 0)
 
-st1 = comment("in attesa di Live", (300, 240, 320, 20), (6, 92, W - 12, 18))
+st1 = comment("waiting for Live", (300, 240, 320, 20), (6, 92, W - 12, 18))
 st2 = comment("", (300, 262, 320, 20), (6, 112, W - 12, 18), fontsize=9.0)
 wire(js, 2, st1, 0)
 wire(js, 3, st2, 0)
-comment("id uscite = config di livebus   ·   @dB = guadagno   ·   Riassegna = nuovo canale del bus",
+comment("output ids = R4F outputs   ·   @dB = gain   ·   Reassign = new bus channel",
         (300, 290, 420, 20), (6, 140, W - 12, 18), fontsize=8.0, textcolor=[0.6, 0.6, 0.6, 1.0])
 
 # --- patcher -----------------------------------------------------------------

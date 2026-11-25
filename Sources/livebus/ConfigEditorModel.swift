@@ -60,9 +60,9 @@ final class ConfigEditorModel: ObservableObject {
 
     func deviceLabel(_ d: AudioDevice, input: Bool) -> String {
         let n = input ? d.inputChannels : d.outputChannels
-        let kind = d.isVirtual ? "virtuale" : d.isAggregate ? "aggregato" : d.isBuiltIn ? "integrato" : "scheda"
+        let kind = d.isVirtual ? "virtual" : d.isAggregate ? "aggregate" : d.isBuiltIn ? "built-in" : "interface"
         let isBus = !input && d.uid == bus
-        return "\(d.name)  —  \(n) can, \(kind)" + (isBus ? "  ⚠︎ è il bus" : "")
+        return "\(d.name)  —  \(n) ch, \(kind)" + (isBus ? "  ⚠︎ this is the bus" : "")
     }
 
     func channels(ofOutput name: String) -> Int? {
@@ -138,14 +138,14 @@ final class ConfigEditorModel: ObservableObject {
     private var boxIssues: [Issue] {
         var out: [Issue] = []
         if device(bus) == nil {
-            out.append(Issue(text: "R4F BOX non è installato: la matrice si salva e verrà applicata quando lo installi.", blocking: false))
+            out.append(Issue(text: "R4F BOX is not installed: the matrix is saved and will be applied when you install it.", blocking: false))
         }
         for (i, r) in routes.enumerated() {
             let st = status(of: r)
-            let label = r.name.isEmpty ? "Rotta \(i + 1)" : "\(r.name) (riga \(i + 1))"
+            let label = r.name.isEmpty ? "Route \(i + 1)" : "\(r.name) (row \(i + 1))"
             if !st.ok { out.append(Issue(text: "\(label): \(st.text)", blocking: true)) }
         }
-        if routes.isEmpty { out.append(Issue(text: "Nessuna rotta: tutti gli ingressi della BOX saranno muti.", blocking: false)) }
+        if routes.isEmpty { out.append(Issue(text: "No routes: all BOX inputs will be silent.", blocking: false)) }
         return out
     }
 
@@ -203,7 +203,7 @@ final class ConfigEditorModel: ObservableObject {
         let usedMax = routes.compactMap { (try? ChannelList.parse($0.from))?.max() }.max() ?? 2
         let next = isBox ? usedMax + 1 : max(3, usedMax + 1)
         // di default Somma: ogni canale su tutte le uscite della rotta, senza alzare il livello
-        routes.append(Route(name: uniqueName("Rotta"), from: "\(next)-\(next + 1)", out: out, channels: "1-2", gainDb: "", sum: true))
+        routes.append(Route(name: uniqueName("Route"), from: "\(next)-\(next + 1)", out: out, channels: "1-2", gainDb: "", sum: true))
     }
 
     // MARK: validazione
@@ -216,20 +216,20 @@ final class ConfigEditorModel: ObservableObject {
     func status(of r: Route) -> (ok: Bool, text: String) {
         do {
             let src = try ChannelList.parse(r.from)
-            guard !r.out.isEmpty else { return (false, "scegli un'uscita") }
-            guard !r.channels.trimmingCharacters(in: .whitespaces).isEmpty else { return (false, "scrivi i canali") }
+            guard !r.out.isEmpty else { return (false, "choose an output") }
+            guard !r.channels.trimmingCharacters(in: .whitespaces).isEmpty else { return (false, "enter the channels") }
             let g = r.gainDb.trimmingCharacters(in: .whitespaces)
-            guard g.isEmpty || Double(g.replacingOccurrences(of: ",", with: ".")) != nil else { return (false, "guadagno non valido") }
+            guard g.isEmpty || Double(g.replacingOccurrences(of: ",", with: ".")) != nil else { return (false, "invalid gain") }
             let token = "\(r.out):\(r.channels.replacingOccurrences(of: " ", with: ""))"
             let map = try RouteSpecParser.expand(src: src, dest: token, busChannels: busChannels ?? 1024,
                                                  outputs: outputInfo, gainDb: gain(r), sum: r.sum)
             let n = map.count
-            var t = n == 1 ? "1 collegamento" : "\(n) collegamenti"
+            var t = n == 1 ? "1 connection" : "\(n) connections"
             let dst = (try? ChannelList.parse(r.channels))?.count ?? 0
             if r.sum && src.count > 1 {
-                t += String(format: ", somma (%.0f dB)", 20 * log10(1 / Double(src.count)))
+                t += String(format: ", sum (%.0f dB)", 20 * log10(1 / Double(src.count)))
             } else if dst == 1 && src.count > 1 {
-                t += ", media"
+                t += ", average"
             }
             return (true, t)
         } catch {
@@ -244,49 +244,49 @@ final class ConfigEditorModel: ObservableObject {
     var issues: [Issue] {
         if isBox { return boxIssues }
         var out: [Issue] = []
-        if bus.isEmpty { out.append(Issue(text: "Scegli il bus su cui suona la DAW.", blocking: true)) }
-        else if device(bus) == nil { out.append(Issue(text: "Il bus \"\(bus)\" non è collegato ora.", blocking: false)) }
-        if outputs.isEmpty { out.append(Issue(text: "Aggiungi almeno un'uscita.", blocking: true)) }
+        if bus.isEmpty { out.append(Issue(text: "Choose the bus your DAW plays into.", blocking: true)) }
+        else if device(bus) == nil { out.append(Issue(text: "The bus \"\(bus)\" is not connected right now.", blocking: false)) }
+        if outputs.isEmpty { out.append(Issue(text: "Add at least one output.", blocking: true)) }
         if !renamedOnLoad.isEmpty {
             let list = renamedOnLoad.map { "\($0.old) → \($0.new)" }.joined(separator: ", ")
-            out.append(Issue(text: "Nomi delle uscite resi automatici: \(list). Salva per applicare; "
-                             + "aggiorna anche le destinazioni nei device R4F Out.", blocking: false))
+            out.append(Issue(text: "Output names made automatic: \(list). Save to apply; "
+                             + "also update the destinations in your R4F Out devices.", blocking: false))
         }
         var names = Set<String>()
         for o in outputs {
             let n = o.name
-            if n.isEmpty { out.append(Issue(text: "Un'uscita non ha nome.", blocking: true)) }
+            if n.isEmpty { out.append(Issue(text: "An output has no name.", blocking: true)) }
             else if n.contains(where: { $0 == ":" || $0 == "@" || $0 == " " || $0 == "," }) {
-                out.append(Issue(text: "Il nome \"\(n)\" non può contenere spazi, ':', '@' o ','.", blocking: true))
+                out.append(Issue(text: "The name \"\(n)\" can't contain spaces, ':', '@' or ','.", blocking: true))
             } else if !names.insert(n).inserted {
-                out.append(Issue(text: "Il nome \"\(n)\" è usato due volte.", blocking: true))
+                out.append(Issue(text: "The name \"\(n)\" is used twice.", blocking: true))
             }
-            if o.device.isEmpty { out.append(Issue(text: "Scegli il dispositivo dell'uscita \"\(n)\".", blocking: true)) }
+            if o.device.isEmpty { out.append(Issue(text: "Choose the device for output \"\(n)\".", blocking: true)) }
             else if device(o.device) == nil {
-                out.append(Issue(text: "\"\(n)\": il dispositivo non è collegato ora (R4F riproverà ogni 5 s).", blocking: false))
+                out.append(Issue(text: "\"\(n)\": the device is not connected right now (R4F retries every 5 s).", blocking: false))
             }
             if !o.delayMs.isEmpty, Double(o.delayMs.replacingOccurrences(of: ",", with: ".")) == nil {
-                out.append(Issue(text: "Ritardo di \"\(n)\" non valido.", blocking: true))
+                out.append(Issue(text: "Invalid delay for \"\(n)\".", blocking: true))
             }
         }
         for o in outputs where !o.device.isEmpty && o.device == bus {
-            out.append(Issue(text: "\"\(o.name)\" è lo stesso dispositivo del bus: ciò che vi mandi rientra nel bus.", blocking: false))
+            out.append(Issue(text: "\"\(o.name)\" is the same device as the bus: whatever you send there comes back into the bus.", blocking: false))
         }
         if let loop = loopDescription {
-            out.append(Issue(text: "Anello di retroazione: \(loop). Il segnale tornerebbe nel bus da cui parte.", blocking: true))
+            out.append(Issue(text: "Feedback loop: \(loop). The signal would return to the bus it comes from.", blocking: true))
         }
         let devs = outputs.map { $0.device }.filter { !$0.isEmpty }
-        if Set(devs).count != devs.count { out.append(Issue(text: "Lo stesso dispositivo è usato da due uscite.", blocking: true)) }
+        if Set(devs).count != devs.count { out.append(Issue(text: "The same device is used by two outputs.", blocking: true)) }
         for (i, r) in routes.enumerated() {
             let st = status(of: r)
-            let label = r.name.isEmpty ? "Rotta \(i + 1)" : "\(r.name) (riga \(i + 1))"
+            let label = r.name.isEmpty ? "Route \(i + 1)" : "\(r.name) (row \(i + 1))"
             if !st.ok { out.append(Issue(text: "\(label): \(st.text)", blocking: true)) }
             if r.name.contains(":") || r.name.contains(">") {
-                out.append(Issue(text: "\(label): il nome non può contenere ':' o '>'.", blocking: true))
+                out.append(Issue(text: "\(label): the name can't contain ':' or '>'.", blocking: true))
             }
         }
         if let p = Int(oscPort), p >= 0, p < 65536 {} else {
-            out.append(Issue(text: "Porta OSC non valida.", blocking: true))
+            out.append(Issue(text: "Invalid OSC port.", blocking: true))
         }
         return out
     }

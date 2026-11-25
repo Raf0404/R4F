@@ -86,7 +86,7 @@ enum R4FBox {
             var ref = Unmanaged.passUnretained(cf)
             return AudioObjectSetPropertyData(dev, &addr, 0, nil, UInt32(MemoryLayout<Unmanaged<CFData>>.size), &ref)
         }
-        try check(st, "matrice di R4F BOX")
+        try check(st, "R4F BOX matrix")
     }
 
     static func read(from dev: AudioObjectID) -> [RouteKey: Float]? {
@@ -102,22 +102,22 @@ enum R4FBox {
     /// All'avvio dell'app e quando cambiano i dispositivi: il driver si allinea a box.json.
     @discardableResult
     static func syncFromFile() -> String {
-        guard let dev = device() else { return "R4F BOX non installato" }
-        guard let cfg = load() else { return "R4F BOX: matrice del driver (\(describe(dev)))" }
+        guard let dev = device() else { return "R4F BOX not installed" }
+        guard let cfg = load() else { return "R4F BOX: driver matrix (\(describe(dev)))" }
         do {
             try push(try links(cfg.routes, channels: dev.outputChannels), to: dev.id)
             return "R4F BOX: \(describe(dev))"
         } catch {
-            return "R4F BOX: errore — \(error)"
+            return "R4F BOX: error — \(error)"
         }
     }
 
     /// "1:1 su 256 canali" oppure "12 collegamenti".
     static func describe(_ dev: AudioDevice) -> String {
-        guard let m = read(from: dev.id) else { return "matrice non leggibile" }
+        guard let m = read(from: dev.id) else { return "matrix not readable" }
         let n = dev.outputChannels
         let isIdentity = m.count == n && m.allSatisfy { $0.key.src == $0.key.dst && $0.value == 1 }
-        if isIdentity { return "1:1 su \(n) canali" }
-        return m.isEmpty ? "tutto muto" : (m.count == 1 ? "1 collegamento" : "\(m.count) collegamenti")
+        if isIdentity { return "1:1 on \(n) channels" }
+        return m.isEmpty ? "all muted" : (m.count == 1 ? "1 connection" : "\(m.count) connections")
     }
 }

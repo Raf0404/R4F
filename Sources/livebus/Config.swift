@@ -43,10 +43,10 @@ struct ChannelList: Codable {
             } else if ends.count == 2, let a = Int(ends[0]), let b = Int(ends[1]), a >= 1, b >= 1 {
                 out.append(contentsOf: a <= b ? Array(a...b) : Array((b...a).reversed()))
             } else {
-                throw LBError("lista di canali non valida: '\(s)'")
+                throw LBError("invalid channel list: '\(s)'")
             }
         }
-        if out.isEmpty { throw LBError("lista di canali vuota") }
+        if out.isEmpty { throw LBError("empty channel list") }
         return out
     }
 }
@@ -73,7 +73,7 @@ struct RouteSpec: Codable {
     var isSum: Bool { mode == "sum" }
 
     static func parseTarget(_ s: String) throws -> (String, [Int]) {
-        guard let colon = s.lastIndex(of: ":") else { throw LBError("destinazione '\(s)': usa id:canali, es. rme:1-8") }
+        guard let colon = s.lastIndex(of: ":") else { throw LBError("destination '\(s)': use id:channels, e.g. rme:1-8") }
         let id = String(s[..<colon])
         let chans = try ChannelList.parse(String(s[s.index(after: colon)...]))
         return (id, chans)
@@ -103,20 +103,20 @@ struct LiveBusConfig: Codable {
         guard FileManager.default.fileExists(atPath: url.path) else {
             let examples = (try? FileManager.default.contentsOfDirectory(atPath: "examples"))?
                 .filter { $0.hasSuffix(".json") }.sorted().map { "examples/" + $0 } ?? []
-            throw LBError("file di configurazione non trovato: \(path)"
-                + (examples.isEmpty ? "" : "\n  esempi disponibili: " + examples.joined(separator: ", ")))
+            throw LBError("configuration file not found: \(path)"
+                + (examples.isEmpty ? "" : "\n  available examples: " + examples.joined(separator: ", ")))
         }
         let data = try Data(contentsOf: url)
         do {
             return try JSONDecoder().decode(LiveBusConfig.self, from: data)
         } catch let e as DecodingError {
-            throw LBError("configurazione non valida (\(path)): \(describe(e))")
+            throw LBError("invalid configuration (\(path)): \(describe(e))")
         }
     }
 
     private static func describe(_ e: DecodingError) -> String {
         switch e {
-        case .keyNotFound(let k, let ctx): return "manca '\(k.stringValue)' in \(ctx.codingPath.map { $0.stringValue }.joined(separator: "."))"
+        case .keyNotFound(let k, let ctx): return "missing '\(k.stringValue)' in \(ctx.codingPath.map { $0.stringValue }.joined(separator: "."))"
         case .typeMismatch(_, let ctx), .valueNotFound(_, let ctx), .dataCorrupted(let ctx):
             return "\(ctx.codingPath.map { $0.stringValue }.joined(separator: ".")): \(ctx.debugDescription)"
         @unknown default: return "\(e)"
@@ -129,7 +129,7 @@ func expandPairs(src: [Int], dst: [Int]) throws -> [(Int, Int)] {
     if src.count == dst.count { return Array(zip(src, dst)) }
     if src.count == 1 { return dst.map { (src[0], $0) } }
     if dst.count == 1 { return src.map { ($0, dst[0]) } }
-    throw LBError("rotta \(src.count)→\(dst.count) canali: le liste devono avere la stessa lunghezza, oppure una deve avere un solo canale")
+    throw LBError("route \(src.count)→\(dst.count) channels: the lists must have the same length, or one of them a single channel")
 }
 
 func dbToLin(_ db: Double) -> Float {

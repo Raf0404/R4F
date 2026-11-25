@@ -42,10 +42,10 @@ final class RouterController {
             osc = o
             state = .running
             watchRates(r)
-            log("avviato con \(configPath)\n" + r.summary())
+            log("started with \(configPath)\n" + r.summary())
         } catch {
             state = .failed("\(error)")
-            log("errore: \(error)")
+            log("error: \(error)")
             scheduleRetry()
         }
         onChange?()
@@ -56,7 +56,7 @@ final class RouterController {
         retryWork?.cancel()
         teardown()
         state = .stopped
-        log("fermato")
+        log("stopped")
         onChange?()
     }
 
@@ -88,7 +88,7 @@ final class RouterController {
         debounceWork?.cancel()
         let w = DispatchWorkItem { [weak self] in
             guard let self = self, self.wantRunning else { return }
-            self.log("riavvio: \(why)")
+            self.log("restart: \(why)")
             self.start()
         }
         debounceWork = w
@@ -109,7 +109,7 @@ final class RouterController {
             if src.data.contains(.rename) || src.data.contains(.delete) {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { self.watchConfig() }
             }
-            self.restartSoon("configurazione modificata", delay: 0.6)
+            self.restartSoon("configuration changed", delay: 0.6)
         }
         src.setCancelHandler { close(fd) }
         src.resume()
@@ -124,7 +124,7 @@ final class RouterController {
         for id in ids {
             var addr = CoreAudioHelpers.address(kAudioDevicePropertyNominalSampleRate)
             let block: AudioObjectPropertyListenerBlock = { [weak self] _, _ in
-                self?.restartSoon("frequenza di campionamento cambiata", delay: 0.8)
+                self?.restartSoon("sample rate changed", delay: 0.8)
             }
             if AudioObjectAddPropertyListenerBlock(id, &addr, DispatchQueue.main, block) == noErr {
                 rateListeners.append((id, block))
@@ -143,7 +143,7 @@ final class RouterController {
     func watchDevices() {
         var addr = CoreAudioHelpers.address(kAudioHardwarePropertyDevices)
         let block: AudioObjectPropertyListenerBlock = { [weak self] _, _ in
-            self?.restartSoon("dispositivi audio cambiati", delay: 1.5)
+            self?.restartSoon("audio devices changed", delay: 1.5)
         }
         devicesListener = block
         AudioObjectAddPropertyListenerBlock(CoreAudioHelpers.system, &addr, DispatchQueue.main, block)
