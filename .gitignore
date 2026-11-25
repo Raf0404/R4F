@@ -10,3 +10,4 @@ device/build/
 vendor/
 
 .DS_Store
+__pycache__/
